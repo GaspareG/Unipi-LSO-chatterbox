@@ -17,7 +17,9 @@
 
 /* aggiungere altre define qui */
 
-
+#ifndef UNIX_PATH_MAX
+#define UNIX_PATH_MAX  108
+#endif
 
 // to avoid warnings like "ISO C forbids an empty translation unit"
 typedef int make_iso_compilers_happy;

@@ -19,7 +19,7 @@ struct serverConfiguration {
 	unsigned long threadsInPool;
 	unsigned long maxMsgSize;
 	unsigned long maxFileSize;
-	unsigned long maxhistMsgs;
+	unsigned long maxHistMsgs;
 	char *unixPath;
 	char *dirName;
 	char *statFileName;

@@ -18,7 +18,7 @@
 #endif
 
 #ifndef UNIX_PATH_MAX
-#define UNIX_PATH_MAX  64
+#define UNIX_PATH_MAX  108
 #endif
 
 #ifndef _POSIX_C_SOURCE

@@ -12,7 +12,7 @@
 #             DirName      = /tmp/chatty_<numero-di-matricola>
 #             StatFileName = /tmp/chatty_stats_<numero-di-matricola>.txt
 
-    # path utilizzato per la creazione del socket AF_UNIX
+# path utilizzato per la creazione del socket AF_UNIX
 UnixPath         = /tmp/chatty_socket
 
 # numero massimo di connessioni pendenti
