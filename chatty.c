@@ -55,7 +55,9 @@ int main(int argc, char *argv[]) {
 
   // Parso il file di configurazione
   readConfig(argv[2], &configuration);
+	fflush(stdout);
 
+//  while(1);
 
   return 0;
 }
@@ -82,10 +84,10 @@ void signalsHandler()
 
 void stopServer()
 {
-	printf("KILL");
+	printf("KILL\n");
 }
 
 void printStatistics()
 {
-	printf("STATS");
+	printf("STATS\n");
 }

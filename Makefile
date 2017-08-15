@@ -10,7 +10,8 @@
 # IMPORTANTE: completare la lista dei file da consegnare
 # 
 FILE_DA_CONSEGNARE=Makefile chatty.c message.h ops.h stats.h config.h \
-		   DATA/chatty.conf1 DATA/chatty.conf2 connections.h configuration.h
+		   DATA/chatty.conf1 DATA/chatty.conf2 connections.c connections.h \
+		   configuration.h configuration.c
 # inserire il nome del tarball: es. NinoBixio
 TARNAME=GaspareFerraro
 # inserice il corso di appartenenza: CorsoA oppure CorsoB
@@ -51,7 +52,8 @@ TARGETS		= chatty        \
 
 
 # aggiungere qui i file oggetto da compilare
-OBJECTS		= 
+OBJECTS		= configuration.o \
+		  connections.o
 
 # aggiungere qui gli altri include 
 INCLUDE_FILES   = connections.h \
