@@ -20,8 +20,13 @@
 
 
 /* inserire gli altri include che servono */
+#include <errno.h>
+#include <sys/select.h> 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h> 
+#include "ops.h"
+#include "message.h"
 #include "config.h"
 #include "configuration.h"
 #include "stats.h"
@@ -32,6 +37,7 @@
  */
 struct statistics  chattyStats = {0, 0, 0, 0, 0, 0, 0};
 struct serverConfiguration configuration = {0, 0, 0, 0, 0, NULL, NULL, NULL};
+fd_set set;
 
 static void usage(const char *progname) {
     fprintf(stderr, "Il server va lanciato con il seguente comando:\n");
@@ -47,13 +53,27 @@ struct worker_arg {
     struct worker_t data;
 };
 
+struct queue {
+    int *data;
+    int size;
+    int front;
+    int back;
+};
+
 // Segnatura delle funzioni utilizzate
 void signalsHandler();
 void stopServer();
 void printStatistics();
 void *worker(void *arg);
 
+struct queue* createQueue(int size);
+int push(struct queue *q, int value);
+int pop(struct queue *q);
+void deleteQueue(struct queue *q);
+
 int stopped ;
+
+struct queue *Q;
 
 pthread_t *threadPool;
 struct worker_arg *threadArg;
@@ -121,9 +141,49 @@ int main(int argc, char *argv[]) {
 
     listen(sock_fd, configuration.maxConnections);
 
-    while( !stopped ){
+    int fd_c, fd_num=0, fd; 
+    fd_set rdset; 
+    int nread;
 
+    if (sock_fd > fd_num) fd_num = sock_fd;     
+    FD_ZERO(&set);
+    FD_SET(sock_fd,&set); 
+
+    q = createQueue(configuration.maxConnections+1);
+    
+    while( !stopped )
+    {
+        rdset = set;
+        
+        if( select(fd_num+1,&rdset,NULL,NULL,NULL) == -1 ) 
+        {
+            // ERRORE
+        }
+        else
+        {
+            for(fd = 0; fd<=fd_num;fd++) 
+            {
+                if( !FD_ISSET(fd,&rdset) ) continue;  
+
+                if (fd == sock_fd) 
+                {
+                    // New client
+                    fd_c=accept(sock_fd,NULL,0);
+                    FD_SET(fd_c, &set);
+                    if (fd_c > fd_num) fd_num = fd_c; 
+                }   
+                else
+                {
+                    // New request
+                    FD_CLR(fd, &set);
+                    // Pusha nella coda
+                    push(q, fd);
+                }
+
+            }
+        }
     }   
+
 
     for(int i=0; i < configuration.threadsInPool; i++)
     {
@@ -141,9 +201,13 @@ void stopServer()
     fflush(stdout);
 }
 
+/**
+ * @function printStatistics
+ * @brief Handler del segnale SIGUSR1, appende le statistiche 
+ *        nel file specificato nelle configurazioni
+ */
 void printStatistics()
 {
-    printf("STATS\n");
     FILE *fdstat;
     fdstat = fopen(configuration.statFileName,"a");
     if( fdstat != NULL )
@@ -152,44 +216,170 @@ void printStatistics()
         printStats(fdstat);
     }
     fclose(fdstat);
-    fflush(stdout);
 }
 
+/**
+ * @function signalsHandler
+ * @brief Registra gli handler per i segnali richiesti
+ */
 void signalsHandler()
 {
+    // Dichiaro le strutture 
     struct sigaction exitHandler; 
     struct sigaction statsHandler;
 
+    // Azzero il cotenuto delle strutture
     memset( &exitHandler, 0, sizeof(exitHandler) );
     memset( &statsHandler, 0, sizeof(statsHandler) );
 
+    // Assegno le funzioni handler alle rispettive strutture
     stopped = 0;
     exitHandler.sa_handler = stopServer;
     statsHandler.sa_handler = printStatistics;
     
+    // Registro i segnali per terminare il server
     sigaction(SIGINT,&exitHandler,NULL);
     sigaction(SIGQUIT,&exitHandler,NULL);
     sigaction(SIGTERM,&exitHandler,NULL);
 
-    if( configuration.statFileName != NULL && strlen(configuration.statFileName) > 0 )
+    // Se nel fie di configurazione ho specificato StatFileName
+    // Registro anche SIGUSR1
+    if( configuration.statFileName != NULL && 
+        strlen(configuration.statFileName) > 0 )
         sigaction(SIGUSR1,&statsHandler,NULL);
 
-    // TODO Check error    
+    // Ignoro i segnali di SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 }
 
-void * worker(void *arg)
+
+void* worker(void *arg)
 {
     int index = ((struct worker_arg*) arg)->index;
     struct worker_t data = ((struct worker_arg*) arg)->data;
 
     data.empty = 0 ;
 
-    printf("THREAD %d START %d\n",index, data.empty);
-    while( !stopped );
+    while( !stopped )
+    {
+        // Estrae dalla coda
 
-    // TODO QUALCOSA
-    printf("THREAD %d STOP\n",index);
+        // legge header ed esegue
+
+        //
+    }
+    
 
     return NULL;
+}
+
+
+int execute(message_t msg, int client_fd)
+{
+
+    op_t operation = msg.hdr.op;
+
+    switch( operation )
+    {
+
+        // richiesta di registrazione di un ninckname
+        case REGISTER_OP:
+            // TODO        
+        break;
+
+        // richiesta di connessione di un client
+        case CONNECT_OP:
+            // TODO        
+        break;
+
+        // richiesta di invio di un messaggio testuale ad un nickname o groupname
+        case POSTTXT_OP:
+            // TODO        
+        break;
+
+        // richiesta di invio di un messaggio testuale a tutti gli utenti 
+        case POSTTXTALL_OP:
+            // TODO        
+        break;
+
+        // richiesta di invio di un file ad un nickname o groupname
+        case POSTFILE_OP:
+            // TODO        
+        break;
+
+        // richiesta di recupero di un file
+        case GETFILE_OP:
+            // TODO        
+        break;
+
+        // richiesta di recupero della history dei messaggi
+        case GETPREVMSGS_OP:
+            // TODO        
+        break;
+
+        // richiesta di avere la lista di tutti gli utenti attualmente connessi
+        case USRLIST_OP:
+            // TODO        
+        break;
+
+        // richiesta di deregistrazione di un nickname o groupname
+        case UNREGISTER_OP:
+            // TODO        
+        break;
+
+        // richiesta di disconnessione
+        case DISCONNECT_OP:	
+            // TODO        
+        break;
+
+        // richiesta di creazione di un gruppo
+        case CREATEGROUP_OP: 
+            // TODO        
+        break;
+
+        // richiesta di aggiunta ad un gruppo
+        case ADDGROUP_OP:
+            // TODO        
+        break;
+
+        // richiesta di rimozione da un gruppo
+        case DELGROUP_OP:
+            // TODO        
+        break;
+
+        default:
+            break;
+    }
+
+}
+
+struct queue* createQueue(int size)
+{
+    struct queue *q = (struct queue*) malloc( sizeof(struct queue) );
+    memset(q, 0, sizeof(struct queue));
+    q->size = size;
+    q->data = (int*) malloc( size * sizeof(int) );    
+    return q;
+}
+
+int push(struct queue *q, int value)
+{
+    if( q->front == q->back ) return -1 ;
+    q->data[q->back] = value;
+    q->back = (q->back+1) % q->size;
+    return value;
+}
+
+int pop(struct queue *q)
+{
+    if( q->front == q->back ) return -1 ; 
+    int ret = q->data[q->front];
+    q->front = (q->front+1) % q->size;
+    return ret;   
+}
+
+void deleteQueue(struct queue *q)
+{
+    free(q->data);
+    free(q);
 }

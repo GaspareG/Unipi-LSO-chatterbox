@@ -1,222 +1,145 @@
 /*
- * chatterbox Progetto del corso di LSO 2017 
+ * chatterbox Progetto del corso di LSO 2017
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
  * 
- * Studente: Francesco Vatteroni
  */
 #ifndef CONNECTIONS_C_
 #define CONNECTIONS_C_
 
-#ifndef MAX_RETRIES
 #define MAX_RETRIES     10
-#endif
-
-#ifndef MAX_SLEEPING
 #define MAX_SLEEPING     3
+#if !defined(UNIX_PATH_MAX)
+#define UNIX_PATH_MAX  64
 #endif
 
-#ifndef UNIX_PATH_MAX
-#define UNIX_PATH_MAX  108
-#endif
-
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200809L
-#endif
-
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE 
-#endif
-
-#ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE
-#endif
-
-
-#include "message.h"
-
-#include "connections.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/socket.h> 
-#include <sys/un.h>
-#include <sys/types.h>
+#include <message.h>
 #include <errno.h>
-#include <unistd.h>
-#include <string.h>
-#include <config.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>  
+#include <unistd.h>      
+#include <stdlib.h>
 
 
-int openConnection(char* path, unsigned int ntimes, unsigned int secs);//fatto
 
-// -------- server side ----- 
-int readHeader(long connfd, message_hdr_t *hdr);
-int readData(long fd, message_data_t *data);
-int readMsg(long fd, message_t *msg);
+/**
+ * @file  connection.h
+ * @brief Contiene le funzioni che implementano il protocollo 
+ *        tra i clients ed il server
+ */
 
-// ------- client side ------
-int sendRequest(long fd, message_t *msg);
-int sendData(long fd, message_data_t *msg);
-int sendHeader(long fd, message_hdr_t *hdr);
-
-// ---------- aux -----------
-int writeaux(long fd, char * buf, int size);
-int readaux(long fd, char * buf, int size);
-
+/**
+ * @function openConnection
+ * @brief Apre una connessione AF_UNIX verso il server 
+ *
+ * @param path Path del socket AF_UNIX 
+ * @param ntimes numero massimo di tentativi di retry
+ * @param secs tempo di attesa tra due retry consecutive
+ *
+ * @return il descrittore associato alla connessione in caso di successo
+ *         -1 in caso di errore
+ */
 int openConnection(char* path, unsigned int ntimes, unsigned int secs)
 {
-	int fds;
-	struct sockaddr_un sa;
-	strncpy(sa.sun_path, path, UNIX_PATH_MAX);
-	sa.sun_family=AF_UNIX;
-	fds=socket(AF_UNIX,SOCK_STREAM,0);
-	int i=0;
-	while (i<ntimes)
-	{
-		connect(fds,(struct sockaddr*) &sa, sizeof(sa));
-		if(errno==ENOENT){i++; sleep(secs);}
-		else
-		{
-			return fds;
-		}
-	}
-	return -1;
+    int fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    struct sockaddr_un sa;
+
+    strncpy(sa.sun_path, path, UNIX_PATH_MAX);
+    sa.sun_family=AF_UNIX;
+
+    if( ntimes > MAX_RETRIES ) ntimes = MAX_RETRIES;
+    if( secs > MAX_SLEEPING ) secs = MAX_SLEEPING;
+
+    while( ntimes-- && connect(fd, (struct sockaddr*) &sa, sizeof(sa) ) == -1 )
+    {
+        if ( errno == ENOENT ) sleep(secs); 
+        else exit(EXIT_FAILURE);
+    }
+
+    return fd;
 }
 
-int sendRequest(long fd, message_t *msg)
-{
-	int aux=0;
-	aux = sendHeader(fd, &msg->hdr);
-	if(aux!=0) { /*printf("A:%ld %d\n",fd, errno);*/ return -1;}
-	aux = sendData(fd, &msg->data);
-	if(aux!=0) { /*printf("B:%ld %d\n",fd, errno);*/ return -1;}
-	return 0;
-}
-
-int sendData(long fd, message_data_t *msg)
-{
-	int aux=0;
-	aux = writeaux (fd, msg->hdr.receiver, sizeof(char)*(MAX_NAME_LENGTH+1));
-	if(aux<0) { /*printf("%ld %d\n",fd, errno); */return -1;}
-	aux = write (fd, &msg->hdr.len, sizeof(int));
-	if(aux<0) { /*printf("%ld %d\n",fd, errno); */return -1;}
-	
-	if(msg->hdr.len>0)
-	{
-		aux = writeaux (fd, msg->buf, sizeof(char)*(msg->hdr.len));
-		if(aux<0) { /*printf("%ld %d\n",fd, errno); */return -1;}
-	}
-	return 0;
-}
-
-
-int sendHeader(long fd, message_hdr_t *msg)
-{
-	int aux=0;
-	aux = write (fd, &(msg->op), sizeof(op_t));
-	if(aux<0) { /*printf("%ld %d\n",fd, errno); */return -1;}
-	aux = writeaux (fd, msg->sender, sizeof(char)*(MAX_NAME_LENGTH+1));
-	if(aux<0) { /*printf("%ld %d\n",fd, errno); */return -1;}
-	return 0;
-}
-
+// -------- server side ----- 
+/**
+ * @function readHeader
+ * @brief Legge l'header del messaggio
+ *
+ * @param fd     descrittore della connessione
+ * @param hdr    puntatore all'header del messaggio da ricevere
+ *
+ * @return <=0 se c'e' stato un errore 
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa) 
+ */
 int readHeader(long connfd, message_hdr_t *hdr)
 {
-	int aux=0;
-	memset(hdr, 0, sizeof(message_hdr_t));
-	aux = read (connfd, &(hdr->op), sizeof(op_t));
-	if(aux<0) { /*printf("%ld %d\n",connfd, errno); */return -1;}
-	aux = readaux (connfd, hdr->sender, sizeof(char)*(MAX_NAME_LENGTH+1));
-	if(aux<0) { /*printf("%ld %d\n",connfd, errno); */return -1;}
-	return 1;
+    return -1;
 }
 
+/**
+ * @function readData
+ * @brief Legge il body del messaggio
+ *
+ * @param fd     descrittore della connessione
+ * @param data   puntatore al body del messaggio
+ *
+ * @return <=0 se c'e' stato un errore
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa) 
+ */
 int readData(long fd, message_data_t *data)
 {
-	int aux=0;
-	memset(data, 0, sizeof(message_data_t));
-	aux = readaux (fd, data->hdr.receiver, sizeof(char)*(MAX_NAME_LENGTH+1));
-	if(aux<0) { /*printf("%ld %d\n",fd, errno); */return -1;}
-	aux = read (fd, &data->hdr.len, sizeof(int));
-	if(aux<0) { /*printf("%ld %d\n",fd, errno); */return -1;};
-	
-	
-	if(data->hdr.len>0)	
-	{
-		data->buf = (char*) malloc(sizeof(char)*(data->hdr.len));
-		memset(data->buf, 0, sizeof(char)*(data->hdr.len));
-		aux = readaux (fd, data->buf, sizeof(char)*(data->hdr.len));
-		if(aux<0) { /*printf("%ld %d\n",fd, errno); */return -1;};
-	}
-	else data->buf = NULL;
-	
-	return 1;
+    return -1;
 }
 
+/**
+ * @function readMsg
+ * @brief Legge l'intero messaggio
+ *
+ * @param fd     descrittore della connessione
+ * @param data   puntatore al messaggio
+ *
+ * @return <=0 se c'e' stato un errore
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa) 
+ */
 int readMsg(long fd, message_t *msg)
 {
-	int aux=0;
-
-	op_t op = OP_END;
-	char R[MAX_NAME_LENGTH];
-	memset(R, 0, (sizeof(char)*(MAX_NAME_LENGTH+1)));
-	strncpy(R, "Ricezione", 9);
-	
-	aux = writeaux (fd, (char*)&op, sizeof(op_t));
-	if(aux<0) { /*printf("%ld %d\n",fd, errno);*/ return -1;}
-	aux = writeaux (fd, R, sizeof(char)*(MAX_NAME_LENGTH+1));
-	if(aux<0) { /*printf("%ld %d\n",fd, errno);*/ return -1;}
-
-	aux = readHeader(fd, &msg->hdr);
-	if(aux<0) { /*printf("%ld %d\n",fd, errno);*/ return -1;}
-	aux = readData(fd, &msg->data);
-	if(aux<0) { /*printf("%ld %d\n",fd, errno);*/ return -1;}
-	return 1;
+    return -1;
 }
 
-int writeaux(long fd, char * buf, int size)
+/* da completare da parte dello studente con altri metodi di interfaccia */
+
+
+// ------- client side ------
+/**
+ * @function sendRequest
+ * @brief Invia un messaggio di richiesta al server 
+ *
+ * @param fd     descrittore della connessione
+ * @param msg    puntatore al messaggio da inviare
+ *
+ * @return <=0 se c'e' stato un errore
+ */
+int sendRequest(long fd, message_t *msg)
 {
-	int sizeaux = size;
-	int rc=0;
-	char *bufaux = NULL;
-	bufaux = buf;
-
-	while(sizeaux>0) 
-	{
-		rc = write((int)fd, bufaux, sizeaux);
-		if (rc == -1)
-		{
-			if (errno != EINTR) { /*printf("%ld %d\n",fd, errno);*/ return -1;}
-		}
-		if (rc == 0) return 0;
-		sizeaux = sizeaux-rc;
-		bufaux  = bufaux+rc;
-	}
-	//printf("sto scrivendo: %s\n", buf);
-	return size;
+    return -1;
 }
 
-int readaux(long fd, char * buf, int size)
+/**
+ * @function sendData
+ * @brief Invia il body del messaggio al server
+ *
+ * @param fd     descrittore della connessione
+ * @param msg    puntatore al messaggio da inviare
+ *
+ * @return <=0 se c'e' stato un errore
+ */
+int sendData(long fd, message_data_t *msg)
 {
-	int sizeaux = size;
-	int rc=0;
-	char *bufaux = NULL;
-	bufaux = buf;
-
-	while(sizeaux>0) 
-	{
-		rc = read((int)fd, bufaux, sizeaux);
-		if (rc == -1)
-		{
-			if (errno != EINTR) { /*printf("%ld %d\n",fd, errno);*/ return -1;}
-		}
-		if (rc == 0) return 0;
-		sizeaux = sizeaux-rc; 
-		bufaux  = bufaux+rc;
-	}
-	//printf("sto leggendo: %s\n", buf);
-	return size;
+    return -1;
 }
-#endif
+
+/* da completare da parte dello studente con eventuali altri metodi di interfaccia */
+
+
+#endif /* CONNECTIONS_C_ */
