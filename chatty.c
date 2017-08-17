@@ -79,7 +79,6 @@ int main(int argc, char *argv[]) {
         printf("%s -> [%s]\n","dirName", configuration.dirName);
     if( configuration.unixPath != NULL )
         printf("%s -> [%s]\n","unixPath", configuration.unixPath);
-
     printf("%s -> [%lu]\n","maxHistMsgs", configuration.maxHistMsgs);
     printf("%s -> [%lu]\n","maxFileSize", configuration.maxFileSize);
     printf("%s -> [%lu]\n","maxMsgSize", configuration.maxMsgSize);

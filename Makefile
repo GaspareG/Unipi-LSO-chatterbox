@@ -50,7 +50,6 @@ LIBS            = -pthread
 TARGETS		= chatty        \
 		  client
 
-
 # aggiungere qui i file oggetto da compilare
 OBJECTS		= configuration.o \
 		  connections.o
