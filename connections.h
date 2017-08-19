@@ -98,7 +98,13 @@ int sendRequest(long fd, message_t *msg);
 int sendData(long fd, message_data_t *msg);
 
 
+
 /* da completare da parte dello studente con eventuali altri metodi di interfaccia */
 
+int sendHeader(long connfd, message_hdr_t *msg);
+
+int readBuffer(long connfd, char *buffer, unsigned int length);
+
+int sendBuffer(long connfd, char *buffer, unsigned int length);
 
 #endif /* CONNECTIONS_H_ */
