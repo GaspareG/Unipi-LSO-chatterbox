@@ -44,7 +44,7 @@ ARFLAGS         =  rvs
 INCLUDES	= -I.
 LDFLAGS 	= -L.
 OPTFLAGS	= #-O3 
-LIBS            = -pthread
+LIBS            = -pthread -lpthread
 
 # aggiungere qui altri targets se necessario
 TARGETS		= chatty        \

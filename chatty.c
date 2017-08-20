@@ -75,6 +75,7 @@ void deleteQueue(struct queue* q);
 
 int stopped;
 
+static pthread_mutex_t Q_mtx = PTHREAD_MUTEX_INITIALIZER;
 struct queue* Q;
 
 pthread_t* threadPool;
@@ -111,12 +112,17 @@ int main(int argc, char* argv[]) {
   signalsHandler();
   printf("Segnali registrati!\n");
 
+
+  printf("Creo socket!\n");
   int sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
   if (sock_fd < 0) {
     perror("socket");
     return -1;
   }
+
+
+  Q = createQueue(configuration.maxConnections + 1);
 
   // Creo i Thread
   threadPool =
@@ -127,18 +133,23 @@ int main(int argc, char* argv[]) {
   for (int i = 0; i < configuration.threadsInPool; i++) {
     threadArg[i].index = i;
 
-    int ret =
-        pthread_create(&threadPool[i], NULL, worker, (void*)&threadArg[i]);
-    if (ret != 0) {
-    }
+    printf("Creo Thread %d!\n", i);
+    int ret = pthread_create(&threadPool[i], NULL, worker, (void*)&threadArg[i]);
+    if( ret == -1 )
+    {
+      printf("ERRORE CREAZIONE THREAD %d\n", i);
+    } 
   }
 
   struct sockaddr_un sa;
   strncpy(sa.sun_path, configuration.unixPath,
           strlen(configuration.unixPath) + 1);
   sa.sun_family = AF_UNIX;
+
+  printf("Bind socket!\n");
   bind(sock_fd, (struct sockaddr*)&sa, sizeof(sa));
 
+  printf("Listen socket!\n");
   listen(sock_fd, configuration.maxConnections);
 
   int fd_c, fd_num = 0, fd;
@@ -148,10 +159,10 @@ int main(int argc, char* argv[]) {
   FD_ZERO(&set);
   FD_SET(sock_fd, &set);
 
-  Q = createQueue(configuration.maxConnections + 1);
 
   while (!stopped) {
     rdset = set;
+    printf("Iterazione!\n");
 
     if (select(fd_num + 1, &rdset, NULL, NULL, NULL) == -1) {
       // ERRORE
@@ -162,19 +173,23 @@ int main(int argc, char* argv[]) {
         if (fd == sock_fd) {
           // New client
           fd_c = accept(sock_fd, NULL, 0);
+          printf("Accept FD = %d!\n", fd_c);
           FD_SET(fd_c, &set);
           if (fd_c > fd_num) fd_num = fd_c;
         } else {
           // New request
+          printf("Richiesta %d!\n", fd);
           FD_CLR(fd, &set);
           // Pusha nella coda
           push(Q, fd);
+          printf("Richiesta incodata %d!\n", fd);
         }
       }
     }
   }
 
   for (int i = 0; i < configuration.threadsInPool; i++) {
+    printf("Join thread %d\n", i);
     pthread_join(threadPool[i], NULL);
   }
   free(threadPool);
@@ -241,18 +256,30 @@ void* worker(void* arg) {
 //  struct worker_t data = ((struct worker_arg*)arg)->data;
 
 //  data.empty = 0;
-  printf("START %d\n", index);
-  message_t* msg = (message_t*)malloc(sizeof(message_t));
+  printf("\tTHREAD[%d] START\n", index);
+  message_t msg;
 
   while (!stopped) {
+
     int fd = pop(Q);
 
-    int ret = readMsg(fd, msg);
-    if (ret != -1) execute(*msg, fd);
+    if( fd == -1 ) continue;
 
+    printf("\tTHREAD[%d] Servo Client %d\n", index, fd);
+
+    int ret = readMsg(fd, &msg);
+    printf("\tTHREAD[%d] RET = %d\n", index, ret);
+    printf("\tTHREAD[%d] OP = %d\n", index, msg.hdr.op);
+    printf("\tTHREAD[%d] SENDER = %s\n", index, msg.hdr.sender);
+    printf("\tTHREAD[%d] RECEIVER = %s\n", index, msg.data.hdr.receiver);
+    printf("\tTHREAD[%d] LEN = %d\n", index, msg.data.hdr.len);
+    printf("\tTHREAD[%d] BUFFEr = %s\n", index, msg.data.hdr.buffer);
+
+    execute(msg, fd);
     FD_SET(fd, &set);
   }
 
+  printf("\tTHREAD[%d] STOP\n", index);
   return NULL;
 }
 
@@ -337,24 +364,42 @@ struct queue* createQueue(int size) {
   memset(q, 0, sizeof(struct queue));
   q->size = size;
   q->data = (int*)malloc(size * sizeof(int));
+  q->front = 0;
+  q->back = 0;
   return q;
 }
 
-int push(struct queue* q, int value) {
-  if (q->front == q->back) return -1;
-  q->data[q->back] = value;
-  q->back = (q->back + 1) % q->size;
+
+int push(struct queue* q, int value)
+{
+  pthread_mutex_lock(&Q_mtx);  
+  if ( q->front == (q->back+1)%(q->size) )
+  {
+    value = -1;
+  }
+  else
+  {
+    q->data[q->back] = value;
+    q->back = (q->back + 1) % q->size;
+  }
+  pthread_mutex_unlock(&Q_mtx);  
   return value;
 }
 
 int pop(struct queue* q) {
-  if (q->front == q->back) return -1;
-  int ret = q->data[q->front];
-  q->front = (q->front + 1) % q->size;
+  pthread_mutex_lock(&Q_mtx);
+  int ret = -1;
+  if(q->front != q->back)
+  {
+    ret = q->data[q->front];
+    q->front = (q->front + 1) % q->size;
+  }
+  pthread_mutex_unlock(&Q_mtx);  
   return ret;
 }
 
 void deleteQueue(struct queue* q) {
+  pthread_mutex_lock(&Q_mtx);  
   free(q->data);
   free(q);
 }
