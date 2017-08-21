@@ -30,6 +30,10 @@
 #include "configuration.h"
 #include "stats.h"
 #include "connections.h"
+#include "icl_hash.h"
+#include "user.h"
+#include "group.h"
+#include "queue.h"
 
 /* struttura che memorizza le statistiche del server, struct statistics
  * e' definita in stats.h.
@@ -44,42 +48,50 @@ static void usage(const char* progname) {
   fprintf(stderr, "  %s -f conffile\n", progname);
 }
 
-struct worker_t {
-  int empty;
-};
+/* funzioni hash per per l'hashing di stringhe */
+static inline unsigned int string_hash_function( void *key ) {
+
+    unsigned long hash = 5381;
+    int c;
+    unsigned char *str = (unsigned char*) key;
+    while ( (c = *str++) )
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
+}
+
+static inline int string_key_compare( void *key1, void *key2  ) {
+    return strcmp( (char*) key1, (char*) key2 );
+}
+
 
 struct worker_arg {
   unsigned long index;
-  struct worker_t data;
-};
-
-struct queue {
-  int* data;
-  int size;
-  int front;
-  int back;
 };
 
 // Segnatura delle funzioni utilizzate
-void signalsHandler();
-void stopServer();
-void printStatistics();
+int signals_handler();
+void stop_server();
+void print_stats();
 void* worker(void* arg);
 
-int execute(message_t msg, int client_fd);
-
-struct queue* createQueue(int size);
-int push(struct queue* q, int value);
-int pop(struct queue* q);
-void deleteQueue(struct queue* q);
+int execute(message_hdr_t msg, int client_fd);
 
 int stopped;
 
-static pthread_mutex_t Q_mtx = PTHREAD_MUTEX_INITIALIZER;
-struct queue* Q;
+static pthread_mutex_t mtx_set = PTHREAD_MUTEX_INITIALIZER;
+
+queue_t* Q;
 
 pthread_t* threadPool;
 struct worker_arg* threadArg;
+
+static pthread_mutex_t mtx_user = PTHREAD_MUTEX_INITIALIZER;
+icl_hash_t *hash_user;
+
+// TODO
+// static pthread_mutex_t mtx_group = PTHREAD_MUTEX_INITIALIZER;
+// icl_hash_t *hash_group;
 
 int main(int argc, char* argv[]) {
   // Controllo uso corretto degli qrgomenti
@@ -109,9 +121,13 @@ int main(int argc, char* argv[]) {
 
   // Registro handler per i segnali
   printf("Registro segnali!\n");
-  signalsHandler();
+  signals_handler();
   printf("Segnali registrati!\n");
 
+  Q = create_queue(configuration.maxConnections + 1);
+  
+  hash_user = icl_hash_create(configuration.maxConnections, string_hash_function, string_key_compare);
+  // hash_group = icl_hash_create(configuration.maxConnections, string_hash_function, string_key_compare);
 
   printf("Creo socket!\n");
   int sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -121,25 +137,11 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
-
-  Q = createQueue(configuration.maxConnections + 1);
-
-  // Creo i Thread
-  threadPool =
-      (pthread_t*)malloc(configuration.threadsInPool * sizeof(pthread_t));
+  threadPool = (pthread_t*)malloc(configuration.threadsInPool * sizeof(pthread_t));
   threadArg = (struct worker_arg*)malloc(configuration.threadsInPool *
                                          sizeof(struct worker_arg));
 
-  for (int i = 0; i < configuration.threadsInPool; i++) {
-    threadArg[i].index = i;
-
-    printf("Creo Thread %d!\n", i);
-    int ret = pthread_create(&threadPool[i], NULL, worker, (void*)&threadArg[i]);
-    if( ret == -1 )
-    {
-      printf("ERRORE CREAZIONE THREAD %d\n", i);
-    } 
-  }
+  
 
   struct sockaddr_un sa;
   strncpy(sa.sun_path, configuration.unixPath,
@@ -159,11 +161,24 @@ int main(int argc, char* argv[]) {
   FD_ZERO(&set);
   FD_SET(sock_fd, &set);
 
+  for (int i = 0; i < configuration.threadsInPool; i++) {
+    threadArg[i].index = i;
+
+    printf("Creo Thread %d!\n", i);
+    int ret = pthread_create(&threadPool[i], NULL, worker, (void*)&threadArg[i]);
+    if( ret == -1 )
+    {
+      printf("ERRORE CREAZIONE THREAD %d\n", i);
+    } 
+  }
 
   while (!stopped) {
+    pthread_mutex_lock(&mtx_set); 
     rdset = set;
+    pthread_mutex_unlock(&mtx_set); 
     printf("Iterazione!\n");
 
+    // TODO add timeout
     if (select(fd_num + 1, &rdset, NULL, NULL, NULL) == -1) {
       // ERRORE
     } else {
@@ -174,14 +189,22 @@ int main(int argc, char* argv[]) {
           // New client
           fd_c = accept(sock_fd, NULL, 0);
           printf("Accept FD = %d!\n", fd_c);
+          
+          pthread_mutex_lock(&mtx_set); 
           FD_SET(fd_c, &set);
+          pthread_mutex_unlock(&mtx_set); 
+          
           if (fd_c > fd_num) fd_num = fd_c;
         } else {
           // New request
           printf("Richiesta %d!\n", fd);
+          
+          pthread_mutex_lock(&mtx_set); 
           FD_CLR(fd, &set);
+          pthread_mutex_unlock(&mtx_set); 
+
           // Pusha nella coda
-          push(Q, fd);
+          push_queue(Q, fd);
           printf("Richiesta incodata %d!\n", fd);
         }
       }
@@ -197,18 +220,18 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 
-void stopServer() {
+void stop_server() {
   printf("KILL\n");
   stopped = 1;
   fflush(stdout);
 }
 
 /**
- * @function printStatistics
+ * @function print_stats
  * @brief Handler del segnale SIGUSR1, appende le statistiche
  *        nel file specificato nelle configurazioni
  */
-void printStatistics() {
+void print_stats() {
   FILE* fdstat;
   fdstat = fopen(configuration.statFileName, "a");
   if (fdstat != NULL) {
@@ -219,187 +242,259 @@ void printStatistics() {
 }
 
 /**
- * @function signalsHandler
+ * @function signals_handler
  * @brief Registra gli handler per i segnali richiesti
  */
-void signalsHandler() {
+int signals_handler() {
   // Dichiaro le strutture
   struct sigaction exitHandler;
   struct sigaction statsHandler;
+  struct sigaction pipeHandler;
 
   // Azzero il cotenuto delle strutture
   memset(&exitHandler, 0, sizeof(exitHandler));
   memset(&statsHandler, 0, sizeof(statsHandler));
+  memset(&pipeHandler,0,sizeof(pipeHandler));    
 
   // Assegno le funzioni handler alle rispettive strutture
   stopped = 0;
-  exitHandler.sa_handler = stopServer;
-  statsHandler.sa_handler = printStatistics;
+  exitHandler.sa_handler = stop_server;
+  statsHandler.sa_handler = print_stats;
+  pipeHandler.sa_handler = SIG_IGN;
 
   // Registro i segnali per terminare il server
-  sigaction(SIGINT, &exitHandler, NULL);
-  sigaction(SIGQUIT, &exitHandler, NULL);
-  sigaction(SIGTERM, &exitHandler, NULL);
+  if( sigaction(SIGINT, &exitHandler, NULL)  == -1 ) {   
+    perror("sigaction");
+    return -1;
+  } 
+  if( sigaction(SIGQUIT, &exitHandler, NULL)  == -1 ) {   
+    perror("sigaction");
+    return -1;
+  } 
+  if( sigaction(SIGTERM, &exitHandler, NULL)  == -1 ) {   
+    perror("sigaction");
+    return -1;
+  } 
 
   // Se nel fie di configurazione ho specificato StatFileName
   // Registro anche SIGUSR1
   if (configuration.statFileName != NULL &&
       strlen(configuration.statFileName) > 0)
-    sigaction(SIGUSR1, &statsHandler, NULL);
+  {
+    if( sigaction(SIGUSR1, &statsHandler, NULL)  == -1 ) {   
+      perror("sigaction");
+      return -1;
+    } 
+  }
 
-  // Ignoro i segnali di SIGPIPE
-  signal(SIGPIPE, SIG_IGN);
+  // ignoro SIGPIPE per evitare di essere terminato da una scrittura su un socket chiuso
+  if ( sigaction(SIGPIPE,&pipeHandler,NULL)  == -1 ) {   
+    perror("sigaction");
+    return -1;
+  } 
+
+  return 0;
 }
 
 void* worker(void* arg) {
   int index = ((struct worker_arg*)arg)->index;
-//  struct worker_t data = ((struct worker_arg*)arg)->data;
 
-//  data.empty = 0;
   printf("\tTHREAD[%d] START\n", index);
-  message_t msg;
+  message_hdr_t hdr;
 
   while (!stopped) {
 
-    int fd = pop(Q);
+    // TODO condition variable
+    int fd = pop_queue(Q);
 
     if( fd == -1 ) continue;
 
     printf("\tTHREAD[%d] Servo Client %d\n", index, fd);
 
-    int ret = readMsg(fd, &msg);
+    int ret = readHeader(fd, &hdr);
     printf("\tTHREAD[%d] RET = %d\n", index, ret);
-    printf("\tTHREAD[%d] OP = %d\n", index, msg.hdr.op);
-    printf("\tTHREAD[%d] SENDER = %s\n", index, msg.hdr.sender);
-    printf("\tTHREAD[%d] RECEIVER = %s\n", index, msg.data.hdr.receiver);
-    printf("\tTHREAD[%d] LEN = %d\n", index, msg.data.hdr.len);
-    printf("\tTHREAD[%d] BUFFEr = %s\n", index, msg.data.hdr.buffer);
+    printf("\tTHREAD[%d] OP = %d\n", index, hdr.op);
+    printf("\tTHREAD[%d] SENDER = %s\n", index, hdr.sender);
 
-    execute(msg, fd);
+    execute(hdr, fd);
+
+    pthread_mutex_lock(&mtx_set);  
     FD_SET(fd, &set);
+    pthread_mutex_unlock(&mtx_set);  
   }
 
   printf("\tTHREAD[%d] STOP\n", index);
   return NULL;
 }
 
-int execute(message_t msg, int client_fd) {
-  op_t operation = msg.hdr.op;
+int execute(message_hdr_t hdr, int client_fd) {
+  message_t reply;
+
+  op_t operation = hdr.op;
+  char *sender = hdr.sender;
 
   switch (operation) {
+
     // richiesta di registrazione di un ninckname
-    case REGISTER_OP:
-      // TODO
-      break;
+    case REGISTER_OP: {      
+      if( register_user(hash_user, &mtx_user, sender) == 0 )
+      {
+        setHeader(&(reply.hdr), OP_OK, "");      
+        char *buffer;
+        int len = user_list(hash_user, &mtx_user, &buffer);
+        setData(&(reply.data), "", buffer, len);
+        sendHeader(client_fd, &(reply.hdr));
+        sendData(client_fd, &(reply.data));
+      }
+      else
+      {
+        setHeader(&(reply.hdr), OP_NICK_ALREADY, "");        
+        sendHeader(client_fd, &(reply.hdr));
+      }
+    } break;
 
     // richiesta di connessione di un client
-    case CONNECT_OP:
-      // TODO
-      break;
+    case CONNECT_OP: {
+      if( connect_user(hash_user, &mtx_user, sender, client_fd) == 0 )
+      {
+        setHeader(&(reply.hdr), OP_OK, "");      
+        char *buffer;
+        int len = user_list(hash_user, &mtx_user, &buffer);
+        setData(&(reply.data), "", buffer, len);
+        sendHeader(client_fd, &(reply.hdr));
+        sendData(client_fd, &(reply.data));
+      }
+      else
+      {
+        setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");        
+        sendHeader(client_fd, &(reply.hdr));
+      }
+    } break;
 
     // richiesta di invio di un messaggio testuale ad un nickname o groupname
-    case POSTTXT_OP:
-      // TODO
-      break;
+    case POSTTXT_OP: {
+      readData(client_fd, &(reply.data));  
+
+      int len = reply.data.hdr.len;
+      char *receiver = reply.data.hdr.receiver;
+      char *buffer = reply.data.buf;
+      int rec_fd = connected_user(hash_user, &mtx_user, receiver);
+
+      if( len > configuration.maxMsgSize )
+      {
+        setHeader(&(reply.hdr), OP_MSG_TOOLONG, "");        
+      }
+      else if( rec_fd >= 0 ) // registrato e connesso
+      {
+        setHeader(&(reply.hdr), OP_OK, "");  
+        message_t msg;
+        setHeader(&(msg.hdr), TXT_MESSAGE, sender); 
+        setData(&(msg.data), receiver, buffer, len);
+        sendRequest(rec_fd, &msg);
+      }
+      else if( rec_fd == -1 ) // registrato ma non connesso
+      {
+        setHeader(&(reply.hdr), OP_OK, "");  
+        user_msg_t msg;
+        msg.type = 0;
+        msg.buffer = buffer;
+        msg.len = len;
+        post_msg(hash_user, &mtx_user, receiver, msg);
+      } 
+      else // non registrato
+      {
+        setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");        
+      }
+
+      sendHeader(client_fd, &(reply.hdr));        
+        
+    } break;
 
     // richiesta di invio di un messaggio testuale a tutti gli utenti
-    case POSTTXTALL_OP:
+    case POSTTXTALL_OP: {
       // TODO
-      break;
+    } break;
 
     // richiesta di invio di un file ad un nickname o groupname
-    case POSTFILE_OP:
+    case POSTFILE_OP: {
       // TODO
-      break;
+    } break;
 
     // richiesta di recupero di un file
-    case GETFILE_OP:
+    case GETFILE_OP: {
       // TODO
-      break;
+    } break;
 
     // richiesta di recupero della history dei messaggi
-    case GETPREVMSGS_OP:
-      // TODO
-      break;
+    case GETPREVMSGS_OP: {
+      message_t *list;
+      int len = retrieve_user_msg(hash_user, &mtx_user, sender, &list);
+      if( len >= 0 )
+      {
+        setHeader(&(reply.hdr), OP_OK, "");
+        setData(&(reply.data), "", (char*)&len, sizeof(size_t));
+        sendRequest(client_fd, &reply);
+        for(int i=0; i<len; i++)
+          sendRequest(client_fd, &list[i]);
+      } 
+      else
+      {
+        setHeader(&(reply.hdr), OP_FAIL, "");
+        sendHeader( client_fd, &(reply.hdr) );
+      } 
+    } break;
 
     // richiesta di avere la lista di tutti gli utenti attualmente connessi
-    case USRLIST_OP:
-      // TODO
-      break;
+    case USRLIST_OP: {
+      setHeader(&(reply.hdr), OP_OK, "");      
+      char *buffer;
+      int len = user_list(hash_user, &mtx_user, &buffer);
+      setData( &(reply.data), "", buffer, len);
+      sendHeader( client_fd, &(reply.hdr));
+      sendData(client_fd, &(reply.data));
+    } break;
 
     // richiesta di deregistrazione di un nickname o groupname
-    case UNREGISTER_OP:
-      // TODO
-      break;
+    case UNREGISTER_OP: {     
+      if( unregister_user(hash_user, &mtx_user, sender) == 0 )
+        setHeader(&(reply.hdr), OP_OK, "");      
+      else
+        setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");        
+      
+      sendHeader(client_fd, &(reply.hdr));
+    } break;
 
     // richiesta di disconnessione
-    case DISCONNECT_OP:
-      // TODO
-      break;
+    case DISCONNECT_OP: {
+      if( disconnect_user(hash_user, &mtx_user, sender) == 0 )
+        setHeader(&(reply.hdr), OP_OK, "");      
+      else
+        setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");        
+      
+      sendHeader(client_fd, &(reply.hdr));
+    } break;
 
     // richiesta di creazione di un gruppo
-    case CREATEGROUP_OP:
+    case CREATEGROUP_OP: {
       // TODO
-      break;
+    } break;
 
     // richiesta di aggiunta ad un gruppo
-    case ADDGROUP_OP:
+    case ADDGROUP_OP: {
       // TODO
-      break;
+    } break;
 
     // richiesta di rimozione da un gruppo
-    case DELGROUP_OP:
+    case DELGROUP_OP: {
       // TODO
-      break;
+    } break;
 
-    default:
-      break;
+    default: {
+    
+    } break;
   }
 
   return 1;
 }
 
-struct queue* createQueue(int size) {
-  struct queue* q = (struct queue*)malloc(sizeof(struct queue));
-  memset(q, 0, sizeof(struct queue));
-  q->size = size;
-  q->data = (int*)malloc(size * sizeof(int));
-  q->front = 0;
-  q->back = 0;
-  return q;
-}
 
-
-int push(struct queue* q, int value)
-{
-  pthread_mutex_lock(&Q_mtx);  
-  if ( q->front == (q->back+1)%(q->size) )
-  {
-    value = -1;
-  }
-  else
-  {
-    q->data[q->back] = value;
-    q->back = (q->back + 1) % q->size;
-  }
-  pthread_mutex_unlock(&Q_mtx);  
-  return value;
-}
-
-int pop(struct queue* q) {
-  pthread_mutex_lock(&Q_mtx);
-  int ret = -1;
-  if(q->front != q->back)
-  {
-    ret = q->data[q->front];
-    q->front = (q->front + 1) % q->size;
-  }
-  pthread_mutex_unlock(&Q_mtx);  
-  return ret;
-}
-
-void deleteQueue(struct queue* q) {
-  pthread_mutex_lock(&Q_mtx);  
-  free(q->data);
-  free(q);
-}

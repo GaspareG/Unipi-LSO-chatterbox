@@ -11,7 +11,10 @@
 # 
 FILE_DA_CONSEGNARE=Makefile chatty.c message.h ops.h stats.h config.h \
 		   DATA/chatty.conf1 DATA/chatty.conf2 connections.c connections.h \
-		   configuration.h configuration.c
+		   configuration.h configuration.c \
+	           group.h group.c user.h user.c icl_hash.h icl_hash.c \
+		   queue.h queue.c list.h list.c
+
 # inserire il nome del tarball: es. NinoBixio
 TARNAME=GaspareFerraro
 # inserice il corso di appartenenza: CorsoA oppure CorsoB
@@ -52,16 +55,25 @@ TARGETS		= chatty        \
 
 # aggiungere qui i file oggetto da compilare
 OBJECTS		= configuration.o \
-		  connections.o
-
+		  connections.o \
+		  icl_hash.o \
+		  user.o \
+		  group.o \
+		  queue.o \
+		  list.o
+ 
 # aggiungere qui gli altri include 
-INCLUDE_FILES   = connections.h \
-		  message.h     \
-		  ops.h	  	\
-		  stats.h       \
-		  config.h      \
-		  configuration.h      
-
+INCLUDE_FILES   = connections.h   \
+		  message.h       \
+		  ops.h	  	  \
+		  group.h  	  \
+		  icl_hash.h  	  \
+		  user.h  	  \
+		  stats.h         \
+		  config.h        \
+		  configuration.h \
+		  queue.h         \
+		  list.h
 
 
 .PHONY: all clean cleanall test1 test2 test3 test4 test5 test6 consegna

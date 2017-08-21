@@ -6,13 +6,9 @@
  * 
  */
 
-#ifndef GROUP_H_
-#define GROUP_H_
+#ifndef GROUP_C_
+#define GROUP_C_
 
 #include <config.h>
 
-struct group {
-  char groupname[MAX_NAME_LENGTH+1];
-};
-    
-#endif /* GROUP_H_ */
+#endif /* GROUP_C_ */ 
