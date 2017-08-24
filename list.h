@@ -16,7 +16,7 @@
 #include <message.h>
 
 typedef struct list_node_t {
-  char *data;
+  void *data;
   struct list_node_t *next;	
 } list_node_t;
 
@@ -29,9 +29,9 @@ typedef struct {
 
 list_t* create_list(unsigned long size);
 
-void push_list(list_t *lst, char *buffer);
+void push_list(list_t *lst, void *data);
 
-char* pop_list(list_t *lst);
+void* pop_list(list_t *lst);
 
 void destroy_list(list_t *lst);
 

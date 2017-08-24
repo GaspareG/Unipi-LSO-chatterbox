@@ -26,14 +26,14 @@ OP_MSG_TOOLONG=28
 ./client -l $1 -k pippo -s libchatty.a:pluto
 e=$?
 if [[ $((256-e)) != $OP_MSG_TOOLONG ]]; then
-    echo "Errore non corrispondente $e" 
+    echo "1 Errore non corrispondente $e" 
     exit 1
 fi
 
 ./client -l $1 -k pluto -S "1234567891011":pippo
 e=$?
 if [[ $((256-e)) != $OP_MSG_TOOLONG ]]; then
-    echo "Errore non corrispondente $e" 
+    echo "2 Errore non corrispondente $e" 
     exit 1
 fi
 

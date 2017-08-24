@@ -104,7 +104,9 @@ static int downloadFile(int connfd, char *filename, char *sender) {
     message_t msg;
     setHeader(&msg.hdr, GETFILE_OP, sender);
     setData(&msg.data, "", filename, strlen(filename)+1);
-    if (sendRequest(connfd, &msg) == -1)  return -1;
+    printf("MANDO RICHIESTA (op=%d,from=%s,to=%s,len=%u,buf=%s)\n", msg.hdr.op, msg.hdr.sender, msg.data.hdr.receiver, msg.data.hdr.len, msg.data.buf);
+    int status = sendRequest(connfd, &msg);
+    if (status == -1)  return -1;
     for( ; ;) {
 	// aspetto di ricevere la risposta alla richiesta
 	if (readHeader(connfd, &msg.hdr) <= 0) return -1;
@@ -121,6 +123,7 @@ static int downloadFile(int connfd, char *filename, char *sender) {
 	     * li conservo in MSGS per gestirli in seguito.
 	     */
 	    if (readMessage(connfd, &msg.hdr)<=0) return -1;
+	    printf("[%s:] %s\n", msg.hdr.sender, (char*)msg.data.buf);
 	} break;
 	default: {
 	    fprintf(stderr, "ERRORE: ricevuto messaggio non valido\n");
@@ -170,14 +173,19 @@ static int execute_requestreply(int connfd, operation_t *o) {
     } 
     
     // spedizione effettiva
-    if (sendRequest(connfd, &msg) == -1) {
+    printf("MANDO RICHIESTA (op=%d,from=%s,to=%s,len=%u,buf=%s)\n", msg.hdr.op, msg.hdr.sender, msg.data.hdr.receiver, msg.data.hdr.len, msg.data.buf);
+    int status = sendRequest(connfd, &msg); 
+    if ( status == -1) {
 	perror("request");
 	return -1;
     }
     if (mappedfile) { // devo inviare il file
 	message_data_t data;
 	setData(&data, "", mappedfile, o->size);
-	if (sendData(connfd, &data) == -1) { // invio il contenuto del file
+	printf("MANDO FILE\n");
+	int status2 = sendData(connfd, &data); 
+	printf("MANDO FILE FINE\n");
+	if (status2 == -1) { // invio il contenuto del file
 	    perror("sending data");
 	    fprintf(stderr, "ERRORE: spedendo il file %s\n", o->msg);
 	    munmap(mappedfile, o->size);

@@ -17,37 +17,63 @@
 #include <list.h>
 
 typedef struct {
-	char name[MAX_NAME_LENGTH+1];
-    list_t *history; // TODO REPLACE WITH LINKED LIST
-    int connected;
-    int fd;
+    char name[MAX_NAME_LENGTH+1];
+    list_t *history; 
+    //list_t *groups; 
+    unsigned long user_fd;
 } user_t;
-    
+ 
+typedef struct {
+  pthread_mutex_t *mtx;
+  icl_hash_t *hash;
+  icl_hash_t *fd;
+  unsigned long history_size;
+  unsigned long connected;
+} user_manager_t;
+
+// Creo l'user manager
+user_manager_t* create_user_manager(unsigned long history_size, unsigned long nbuckets);
+
+// Distrugge l'user manager   
+void destroy_user_manager(user_manager_t *user_manager);
+
 // Registra un utente
-int register_user(icl_hash_t *hash, pthread_mutex_t *mtx, char *name);
+int register_user(user_manager_t *user_manager, char *name);
 
 // Connette un utente
-int connect_user(icl_hash_t *hash, pthread_mutex_t *mtx, char *name, unsigned long fd);
+int connect_user(user_manager_t *user_manager, char *name, unsigned long fd);
 
 // Deregistra un utente
-int unregister_user(icl_hash_t *hash, pthread_mutex_t *mtx, char *name);
+int unregister_user(user_manager_t *user_manager, char *name);
 
 // Disconnette un utente
-int disconnect_user(icl_hash_t *hash, pthread_mutex_t *mtx, char *name);
+int disconnect_user(user_manager_t *user_manager, char *name);
+
+// Disconnette un utente dato fd
+int disconnect_fd_user(user_manager_t *user_manager, unsigned long fd);
 
 // Restituisce la lista degli utenti come stringa
-int user_list(icl_hash_t *hash, pthread_mutex_t *mtx, char **list);
+int user_list(user_manager_t *user_manager, char **list);
+
+// Lista fd degli online
+int fd_list(user_manager_t *user_manager, int **list);
 
 // Post MSG
-int post_msg(icl_hash_t *hash, pthread_mutex_t *mtx, char *name, user_msg_t msg);
+int post_msg(user_manager_t *user_manager, char *name, message_t *msg);
 
 // Post MSG ALL
-int post_msg_all(icl_hash_t *hash, pthread_mutex_t *mtx, user_msg_t msg);
+int post_msg_all(user_manager_t *user_manager, message_t *msg);
 
 // retrieve message list
-int retrieve_user_msg(icl_hash_t *hash, pthread_mutex_t *mtx, char *name, message_t **msg_list);
+int retrieve_user_msg(user_manager_t *user_manager, char *name, message_t ***msg_list);
 
 // is user connected
-int connected_user(icl_hash_t *hash, pthread_mutex_t *mtx, char *name);
+int connected_user(user_manager_t *user_manager, char *name);
+
+// libera in memoria la struttura
+void free_user(void *user);
+
+// libera in memoria la struttura
+void free_name_user(void *user);
 
 #endif /* USER_H_ */

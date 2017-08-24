@@ -23,27 +23,24 @@ list_t* create_list(unsigned long size)
   return ret;
 }
 
-void push_list(list_t *lst, char *buffer)
+void push_list(list_t *lst, void *data)
 {
-	if( lst->size > 0 && lst->cursize == lst->size ) pop_list(lst);
-	list_node_t *to_add = (list_node_t*) malloc(sizeof(list_node_t));
+  if( lst->size > 0 && lst->cursize == lst->size ) pop_list(lst);
+  list_node_t *to_add = (list_node_t*) malloc(sizeof(list_node_t));
 	
-	int len = strlen(buffer);
-	to_add->data = (char*) malloc( (len+1)*sizeof(char));
-	strcpy(to_add->data, buffer);
-  	to_add->next = NULL;
-	
-	if( lst->front == NULL && lst->back == NULL ) lst->front = to_add;
-	(lst->back)->next = to_add;
-	lst->back = to_add;
-	lst->cursize++;
+  to_add->data = data;
+  to_add->next = NULL;
 
+  if( lst->front == NULL && lst->back == NULL ) lst->front = to_add;
+  if( lst->back != NULL ) (lst->back)->next = to_add;
+  lst->back = to_add;
+  lst->cursize++;
 }
 
-char* pop_list(list_t *lst)
+void* pop_list(list_t *lst)
 {
 	if( lst->cursize == 0 ) return NULL;
-	char *ret = (lst->front)->data;
+	void *ret = (void*) (lst->front)->data;
 	if( lst->cursize == 1 ) 
 	{
 	  	lst->front = lst->back = NULL;

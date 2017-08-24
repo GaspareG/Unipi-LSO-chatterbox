@@ -17,6 +17,7 @@ typedef struct {
   int front;
   int back;
   pthread_mutex_t mtx;
+  pthread_cond_t cond;
 } queue_t;
 
 queue_t* create_queue(int size);

@@ -21,6 +21,9 @@
 #define UNIX_PATH_MAX  108
 #endif
 
+#define ec_val_ret(v,r,s) \
+	if( (s) == (v) ) return (r);
+
 // to avoid warnings like "ISO C forbids an empty translation unit"
 typedef int make_iso_compilers_happy;
 

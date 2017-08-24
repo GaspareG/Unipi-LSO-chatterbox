@@ -22,6 +22,7 @@ queue_t* create_queue(int size) {
   q->front = 0;
   q->back = 0;
   pthread_mutex_init(&(q->mtx), NULL);
+  pthread_cond_init(&(q->cond), NULL);
   return q;
 }
 
@@ -35,6 +36,7 @@ int push_queue(queue_t* q, int value)
     q->data[q->back] = value;
     q->back = (q->back + 1) % q->size;
     ret = value;
+    pthread_cond_signal(&(q->cond));
   }
   pthread_mutex_unlock(&(q->mtx));  
   return ret;
@@ -43,6 +45,7 @@ int push_queue(queue_t* q, int value)
 int pop_queue(queue_t* q) {
   int ret = -1;
   pthread_mutex_lock(&(q->mtx));
+  if(q->front == q->back) pthread_cond_wait(&(q->cond), &(q->mtx));
   if(q->front != q->back)
   {
     ret = q->data[q->front];
@@ -54,7 +57,8 @@ int pop_queue(queue_t* q) {
 
 void delete_queue(queue_t* q) {
   pthread_mutex_lock(&(q->mtx));  
-  pthread_mutex_destroy(&(q->mtx));  
+  pthread_mutex_destroy(&(q->mtx));
+  pthread_cond_destroy(&(q->cond));  
   free(q->data);
   free(q);
 }
