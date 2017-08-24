@@ -6,8 +6,8 @@ if [[ $# != 1 ]]; then
 fi
 
 rm -f valgrind_out
-/usr/bin/valgrind --track-origins=yes -v --leak-check=full ./chatty -f DATA/chatty.conf1 >& ./valgrind_out &
-#/usr/bin/valgrind --leak-check=full ./chatty -f DATA/chatty.conf1 >& ./valgrind_out &
+#/usr/bin/valgrind --track-origins=yes -v --leak-check=full ./chatty -f DATA/chatty.conf1 >& ./valgrind_out &
+/usr/bin/valgrind --leak-check=full ./chatty -f DATA/chatty.conf1 >& ./valgrind_out &
 pid=$!
 
 # aspetto un po' per far partire valgrind
@@ -38,7 +38,7 @@ pid1=$!
 ./client -l $1 -k qua -S "Ciao a tutti, io ricevo e basta": -R -1 &
 pid2=$!
 
-./client -l $1 -k topolino -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":paperino -s client:minni -s chatty:qua 
+./client -l $1 -k topolino -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":paperino -s client:minni  -s chatty:qua 
 
 ./client -l $1 -k paperino -p -S "aaaaaaaaaaaaaaaaaaaaaaaaaaa":minni -S "bbbbbbbbbbbbbbbbb":pluto -S "ccccccccccccccccc": -S "ddddddddddddddddddddd":topolino -s ./libchatty.a:minni
 
@@ -50,7 +50,7 @@ kill -USR1 $pid
 sleep 1
 
 # termino i client in ascolto
-kill -TERM $pid1 $pid2
+#kill -TERM $pid1 $pid2
 
 sleep 1
 

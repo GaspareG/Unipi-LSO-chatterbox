@@ -452,6 +452,7 @@ int execute(message_t received, int client_fd) {
           return -1;
         }
       }
+      free(received.data.buf);
     } break;
 
     // OK
@@ -498,6 +499,7 @@ int execute(message_t received, int client_fd) {
           return -1;
         }
       }
+      free(received.data.buf);
       printf("\t\t\tFINE OP CONNECT SENDER[%s]\n", sender);
     } break;
 
@@ -535,7 +537,7 @@ int execute(message_t received, int client_fd) {
         update_stats(0, 0, 0, 1, 0, 0, 0);
         setHeader(&(reply.hdr), OP_OK, "");
         received.hdr.op = TXT_MESSAGE;
-        post_msg(user_manager, receiver, &received);
+         post_msg(user_manager, receiver, &received);
       } else  // non registrato
       {
         // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
@@ -545,6 +547,7 @@ int execute(message_t received, int client_fd) {
       }
 
       sendHeader(client_fd, &(reply.hdr));
+      free(received.data.buf);
 
       printf("\t\t\tFINE OP POSTTXT SENDER[%s]\n", sender);
     } break;
@@ -598,6 +601,7 @@ int execute(message_t received, int client_fd) {
         received.data.buf = NULL;
         return -1;
       }
+      free(received.data.buf);
       printf("\t\t\tFINE OP POSTTXTALL SENDER[%s]\n", sender);
     } break;
 
@@ -712,6 +716,7 @@ int execute(message_t received, int client_fd) {
           return -1;
         }
       }
+      free(received.data.buf);
       printf("\t\tFINE OP POSTFILE SENDER[%s]\n", sender);
     } break;
 
@@ -791,6 +796,7 @@ int execute(message_t received, int client_fd) {
           free(filename);  // TODO MEMCHECK
         }
       }
+      free(received.data.buf);
       printf("\t\t\tFINE OP GETFILE SENDER[%s]\n", sender);
     } break;
 
@@ -830,6 +836,7 @@ int execute(message_t received, int client_fd) {
         setHeader(&(reply.hdr), OP_FAIL, "");
         sendHeader(client_fd, &(reply.hdr));
       }
+      free(received.data.buf);
       printf("\t\t\tFINE OP GETPREVMSGS SENDER[%s]\n", sender);
     } break;
 
@@ -853,7 +860,7 @@ int execute(message_t received, int client_fd) {
         received.data.buf = NULL;
         return -1;
       }
-      // free(buffer);
+      free(received.data.buf);
       printf("\t\t\tFINE OP USRLIST SENDER[%s]\n", sender);
     } break;
 
@@ -875,6 +882,7 @@ int execute(message_t received, int client_fd) {
       } else
         setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
 
+      free(received.data.buf);
       sendHeader(client_fd, &(reply.hdr));
       printf("\t\t\tFINE OP UNREGISTER SENDER[%s]\n", sender);
     } break;
@@ -891,6 +899,7 @@ int execute(message_t received, int client_fd) {
       } else
         setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
       sendHeader(client_fd, &(reply.hdr));
+      free(received.data.buf);
       printf("\t\t\tFINE OP DISCONNECT SENDER[%s]\n", sender);
     } break;
 
@@ -898,6 +907,7 @@ int execute(message_t received, int client_fd) {
     case CREATEGROUP_OP: {
       printf("\t\t\tINIZIO OP CREATEGROUP SENDER[%s]\n", sender);
       // TODO
+      free(received.data.buf);
       printf("\t\t\tFINE OP CREATEGROUP SENDER[%s]\n", sender);
     } break;
 
@@ -905,6 +915,7 @@ int execute(message_t received, int client_fd) {
     case ADDGROUP_OP: {
       printf("\t\t\tINIZIO OP ADDGROUP SENDER[%s]\n", sender);
       // TODO
+      free(received.data.buf);
       printf("\t\t\tFINE OP ADDGROUP SENDER[%s]\n", sender);
     } break;
 
@@ -912,6 +923,7 @@ int execute(message_t received, int client_fd) {
     case DELGROUP_OP: {
       printf("\t\t\tINIZIO OP DELGROUP SENDER[%s]\n", sender);
       // TODO
+      free(received.data.buf);
       printf("\t\t\tFINE OP DELGROUP SENDER[%s]\n", sender);
     } break;
 

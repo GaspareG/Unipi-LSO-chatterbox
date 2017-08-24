@@ -79,10 +79,14 @@ int readData(long connfd, message_data_t *data)
     }
     else
     {
+      printf("**********READ DATA %d\n",data->hdr.len);
       data->buf = (char*) malloc( data->hdr.len * sizeof(char) );
       memset(data->buf, 0, data->hdr.len * sizeof(char));
       tmp = readBuffer(connfd, data->buf, data->hdr.len);
-      if( tmp < 0 ) return -1;
+      if( tmp < 0 ){
+	free(data->buf);
+	return -1;
+      }
     }
     return 1;
 }
