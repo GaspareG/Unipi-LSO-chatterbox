@@ -21,6 +21,13 @@
 #include <stdlib.h>
 #include <message.h>
 
+/**
+ *  @struct create_list
+ *  @brief crea una lista linkata
+ *
+ *  @var size dimensione massima della lista ( 0 = infinita )
+ *  @return puntatore alla lista create
+ */
 list_t *create_list(unsigned long size) {
   list_t *ret = (list_t *)malloc(sizeof(list_t));
   ret->size = size;
@@ -30,6 +37,15 @@ list_t *create_list(unsigned long size) {
   return ret;
 }
 
+/**
+ *  @struct push_list
+ *  @brief libera la lista della memoria
+ *
+ *  @var lst lista da dove fare il push
+ *  @var data informazione da inserire
+ *  @return puntatore al nodo rimosso se lista piena
+ *          NULL se la coda non è piena o non ha limite di dimensione
+ */
 list_node_t *push_list(list_t *lst, void *data) {
   list_node_t *ret = NULL;
   if (lst->size > 0 && lst->cursize == lst->size) ret = pop_list(lst);
@@ -50,6 +66,14 @@ list_node_t *push_list(list_t *lst, void *data) {
   return ret;
 }
 
+/**
+ *  @struct pop_list
+ *  @brief estra il primo elemento della list
+ *
+ *  @var lst       lista da dove fare il pop
+ *  @return puntatore all'elemento tolto
+ *          NULL se lista vuota
+ */
 void *pop_list(list_t *lst) {
   if (lst->cursize == 0) return NULL;
   void *ret = (lst->front)->data;
@@ -63,6 +87,13 @@ void *pop_list(list_t *lst) {
   return ret;
 }
 
+/**
+ *  @struct destroy_list
+ *  @brief libera la lista della memoria
+ *
+ *  @var lst       puntatore alla lista da liberare
+ *  @var free_data puntatore alla funzione per liberare i dati dei nodi
+ */
 void destroy_list(list_t *lst, void (*free_data)(void *)) {
   void *tmp;
   tmp = NULL;

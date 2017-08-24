@@ -117,23 +117,14 @@ test1:
 	\mkdir -p $(DIR_PATH)
 	make all
 	./chatty -f DATA/chatty.conf1&
-	@echo "********** Parte 1 superato!"
 	./client -l $(UNIX_PATH) -c pippo
-	@echo "********** Parte 2 superato!"
 	./client -l $(UNIX_PATH) -c pluto
-	@echo "********** Parte 3 superato!"
 	./client -l $(UNIX_PATH) -c minni
-	@echo "********** Parte 4 superato!"
-	./client -l $(UNIX_PATH) -k pippo -S "Ciao pluto":pluto -S "come stai?":pluto -S "tutto bene?":pluto
-	@echo "********** Parte 5 superato!"
+	./client -l $(UNIX_PATH) -k pippo -S "Ciao pluto":pluto -S "come stai?":pluto
 	./client -l $(UNIX_PATH) -k pluto -p -S "Ciao pippo":pippo -S "bene e tu?":pippo -S "Ciao minni come stai?":minni
-	@echo "********** Parte 6 superato!"
 	./client -l $(UNIX_PATH) -k pippo -p
-	@echo "********** Parte 7 superato!"
 	./client -l $(UNIX_PATH) -k pluto -p
-	@echo "********** Parte 8 superato!"
 	./client -l $(UNIX_PATH) -k minni -p
-	@echo "********** Parte 9 superato!"
 	killall -QUIT -w chatty
 	@echo "********** Test1 superato!"
 
@@ -142,7 +133,7 @@ test2:
 	make cleanall
 	\mkdir -p $(DIR_PATH)
 	make all
-	./chatty -f DATA/chatty.conf1 > out.txt&
+	./chatty -f DATA/chatty.conf1&
 	./testfile.sh $(UNIX_PATH) $(DIR_PATH)
 	killall -QUIT -w chatty
 	@echo "********** Test2 superato!"
@@ -152,7 +143,7 @@ test3:
 	make cleanall
 	\mkdir -p $(DIR_PATH)
 	make all
-	./chatty -f DATA/chatty.conf2 > out.txt &
+	./chatty -f DATA/chatty.conf2&
 	./testconf.sh $(UNIX_PATH) $(STAT_PATH)
 	killall -QUIT -w chatty
 	@echo "********** Test3 superato!"
@@ -171,7 +162,7 @@ test5:
 	make cleanall
 	\mkdir -p $(DIR_PATH)
 	make all
-	./chatty -f DATA/chatty.conf1 &
+	./chatty -f DATA/chatty.conf1&
 	./teststress.sh $(UNIX_PATH)
 	killall -QUIT -w chatty
 	@echo "********** Test5 superato!"
@@ -180,13 +171,12 @@ test5:
 test6:
 	make cleanall
 	\mkdir -p $(DIR_PATH)
-	make all		
-	# /usr/bin/valgrind --leak-check=full ./chatty -f DATA/chatty.conf1 >& ./valgrind_out &
-	./chatty -f DATA/chatty.conf1 > out.txt &
+	make all
+	./chatty -f DATA/chatty.conf1&
 	./testgroups.sh $(UNIX_PATH)
 	killall -QUIT -w chatty
-	#k illall -QUIT -w valgrind
 	@echo "********** Test6 superato!"
+
 
 
 # target per la consegna

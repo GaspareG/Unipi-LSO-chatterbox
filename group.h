@@ -19,43 +19,130 @@
 #include <config.h>
 #include <user.h>
 
-typedef struct  {
-  char groupname[MAX_NAME_LENGTH+1];
-  icl_hash_t *member; 
-  int size;   
+/**
+ *  @struct group_t
+ *  @brief Informazioni di un gruppo
+ *
+ *  @var groupname nome del gruppo
+ *  @var member    set dei membri del gruppo
+ *  @var size      numero dei membri del gruppo
+ */
+typedef struct {
+  char groupname[MAX_NAME_LENGTH + 1];
+  icl_hash_t *member;
+  int size;
 } group_t;
 
+/**
+ *  @struct group_t
+ *  @brief Informazioni di un gruppo
+ *
+ *  @var groupname nome del gruppo
+ *  @var member    set dei membri del gruppo
+ *  @var size      numero dei membri del gruppo
+ */
 typedef struct {
-  user_manager_t *user_manager;
   pthread_mutex_t *mtx;
-  icl_hash_t *groups;  
+  icl_hash_t *groups;
   unsigned long buckets;
-} group_manager_t ;
+} group_manager_t;
 
-// Creazione del group manager
-group_manager_t* create_group_manager(user_manager_t* usr_mng, unsigned long nbuckets);
-  
-// Distruzione del group manager
-void destroy_group_manager(group_manager_t* manager);
-  
-// Creazione di un gruppo 
-int create_group(group_manager_t* manager, char *groupname);
+/**
+ * @function create_group_manager
+ * @brief 
+ *
+ * @param manager   puntatore al group_manager
+ * @param history_size dimensione della cronologia per ogni utente
+ * @param nbuckets     numero dei bucket per le hashmap
+ * @return puntatore al group_manager creato
+ */
+group_manager_t *create_group_manager(unsigned long nbuckets);
 
-// Adesione di un utente ad un gruppo
-int join_group(group_manager_t* manager, char *groupname, char *username);
+/**
+ * @function destroy_group_manager
+ * @brief libera della memoria il group manager
+ *
+ * @param manager   puntatore al group_manager
+ */
+void destroy_group_manager(group_manager_t *manager);
 
-// Abbandono di un utente di un gruppo
-int leave_group(group_manager_t* manager, char *groupname, char *username);
+/**
+ * @function create_group
+ * @brief crea un nuovo gruppo
+ *
+ * @param manager   puntatore al group_manager
+ * @param groupname nome del gruppo da creare
+ * @return 1 operazione effettuata correttamente
+ *        -1 errore nello svolgimento dell'operazione
+ */
+int create_group(group_manager_t *manager, char *groupname);
 
-// Controllo se utente in gruppo
-int in_group(group_manager_t* manager, char *groupname, char *username);
+/**
+ * @function join_group
+ * @brief registra un utente in un gruppo
+ *
+ * @param manager   puntatore al group_manager
+ * @param groupname nome del gruppo
+ * @param username  nome dell'utente
+ * @return 1 operazione effettuata correttamente
+ *        -1 errore nello svolgimento dell'operazione
+ */
+int join_group(group_manager_t *manager, char *groupname, char *username);
 
-// Controllo se utente il gruppo
-int exists_group(group_manager_t* manager, char *groupname);
+/**
+ * @function leave_group
+ * @brief deregistra un utente da un gruppo
+ *
+ * @param manager   puntatore al group_manager
+ * @param groupname nome del gruppo
+ * @param username  nome dell'utente
+ * @return 1 operazione effettuata correttamente
+ *        -1 errore nello svolgimento dell'operazione
+ */
+int leave_group(group_manager_t *manager, char *groupname, char *username);
 
-// Invio di un messaggio in gruppo
-int members_group(group_manager_t* manager, char *groupname, char **list);
+/**
+ * @function in_group
+ * @brief verifica la presenza di un utente in un gruppo
+ *
+ * @param manager   puntatore al group_manager
+ * @param groupname nome del gruppo
+ * @param username  nome dell'utente
+ * @return 1 se l'utente appartiene al gruppo
+ *        -1 se l'utente non appartiene al gruppo
+ */
+int in_group(group_manager_t *manager, char *groupname, char *username);
 
-// Libera un gruppo in memoria
+/**
+ * @function exists_group
+ * @brief verifica l'esistenza di un gruppo 
+ *
+ * @param manager   puntatore al group_manager
+ * @param groupname nome del gruppo
+ * @return 1 se il gruppo esiste
+ *        -1 se il gruppo non esiste
+ */
+int exists_group(group_manager_t *manager, char *groupname);
+
+/**
+ * @function members_group
+ * @brief restituisce la lista dei partecipanti di un gruppo
+ *
+ * @param manager   puntatore al group_manager
+ * @param groupname nome del gruppo 
+ * @param list      puntatore all'area di memoria dove 
+ *                  verranno scritti i partecipanti al gruppo
+ * @return >= 0 numero dei partecipanti al gruppo
+ *           -1 se il gruppo non esiste
+ */
+int members_group(group_manager_t *manager, char *groupname, char **list);
+
+/**
+ * @function free_group
+ * @brief libera la memoria occupata da un gruppo
+ *
+ * @param group puntatore al gruppo da liberare
+ */
 void free_group(void *group);
+
 #endif /* GROUP_H_ */

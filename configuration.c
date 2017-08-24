@@ -22,10 +22,20 @@
 
 #include "configuration.h"
 
+/**
+ * @function readConfig
+ * @brief effettua il parsing del file di configurazione
+ *
+ * @param fileName nome del file di configurazione da analizzare
+ * @param config puntatore alla struttura dove scrivere le configurazioni
+ * @return   0 se i dati sono stati letti correttamente 
+ *          -1 per errore
+ */
 int readConfig(char *fileName, struct serverConfiguration *config) {
+  // Apro il file e guardo la dimensione
   FILE *fd;
   fd = fopen(fileName, "r");
-
+  if( fd == NULL ) return -1;
   fseek(fd, 0L, SEEK_END);
   int fileSize = ftell(fd);
   fseek(fd, 0, SEEK_SET);
@@ -35,16 +45,21 @@ int readConfig(char *fileName, struct serverConfiguration *config) {
   char *value = (char *)malloc(fileSize * sizeof(char));
 
   int dn = 0, up = 0, sfn = 0;
+  // Finchè ho righe da leggere
   while (fgets(currLine, fileSize, fd) != NULL) {
     int lineSize = strlen(currLine);
+
+    // se vuota o commento salto
     if (lineSize <= 1 || currLine[0] == '#') continue;
 
+    // leggo chiave e valore
     sscanf(currLine, "%s = %s", key, value);
 
     int keySize = strlen(key);
     int valueSize = strlen(value);
     if (keySize == 0 || valueSize == 0) continue;
-
+   
+    // controllo a quale parametro la chiave si riferisce
     if (!up && strcmp(key, "UnixPath") == 0) {
       up = 1;
       config->unixPath = (char *)malloc((valueSize + 1) * sizeof(char));
@@ -81,12 +96,12 @@ int readConfig(char *fileName, struct serverConfiguration *config) {
     fflush(stdout);
   }
 
+  // Libero la memoria alloca e chiudo il file aperto
   free(currLine);
   free(key);
   free(value);
 
   fclose(fd);
-  fflush(stdout);
   return 0;
 }
 

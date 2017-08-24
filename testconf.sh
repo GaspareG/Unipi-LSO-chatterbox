@@ -26,14 +26,14 @@ OP_MSG_TOOLONG=28
 ./client -l $1 -k pippo -s libchatty.a:pluto
 e=$?
 if [[ $((256-e)) != $OP_MSG_TOOLONG ]]; then
-    echo "1 Errore non corrispondente $e" 
+    echo "Errore non corrispondente $e" 
     exit 1
 fi
 
 ./client -l $1 -k pluto -S "1234567891011":pippo
 e=$?
 if [[ $((256-e)) != $OP_MSG_TOOLONG ]]; then
-    echo "2 Errore non corrispondente $e" 
+    echo "Errore non corrispondente $e" 
     exit 1
 fi
 
@@ -49,7 +49,7 @@ sleep 1
 read reg online deliv notdeliv filedeliv filenotdeliv errors <<< $(tail -1 $2 | cut -d\  -f 3,4,5,6,7,8,9)
 
 if [[ $reg != 1 || $online != 1 || $deliv != 0 || $notdeliv != 100 || $filedeliv != 0 || $filenotdeliv != 100 || $errors != 2 ]]; then 
-    echo "QUA Test FALLITO"
+    echo "Test FALLITO"
     exit 1
 fi
 

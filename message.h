@@ -9,7 +9,7 @@
  */
 /**
  * @file message.h
- * @brief Definizione delle strutture e funzioni basilari per 
+ * @brief Definizione delle strutture e funzioni basilari per
  *        la rappresentazione e gestione dei messaggi scambiati
  */
 
@@ -113,8 +113,14 @@ static inline void setData(message_data_t *data, char *rcv, const char *buf,
   data->buf = (char *)buf;
 }
 
-static inline message_t *copyMsg(message_t *msg) {
-  message_t *cpy = (message_t *) malloc(sizeof(message_t));
+/**
+ * @function copyMsg
+ * @brief crea una copia del messaggio
+ *
+ * @param msg puntatore al messaggio da copiare
+ * @return puntatore alla copia del messaggio
+ */static inline message_t *copyMsg(message_t *msg) {
+  message_t *cpy = (message_t *)malloc(sizeof(message_t));
 #if defined(MAKE_VALGRIND_HAPPY)
   memset((char *)cpy, 0, sizeof(message_t));
 #endif

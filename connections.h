@@ -49,6 +49,7 @@ int openConnection(char *path, unsigned int ntimes, unsigned int secs);
  *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
  */
 int readHeader(long connfd, message_hdr_t *hdr);
+
 /**
  * @function readData
  * @brief Legge il body del messaggio
@@ -101,10 +102,42 @@ int sendData(long fd, message_data_t *msg);
 /* da completare da parte dello studente con eventuali altri metodi di
  * interfaccia */
 
+/**
+ * @function sendHeader
+ * @brief Invia l'header del messaggio
+ *
+ * @param fd     descrittore della connessione
+ * @param hdr    puntatore all'header del messaggio da inviare
+ *
+ * @return <=0 se c'e' stato un errore
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
+ */
 int sendHeader(long connfd, message_hdr_t *msg);
 
+/**
+ * @function readBuffer
+ * @brief Legge un buffer 
+ *
+ * @param fd     descrittore della connessione
+ * @param buffer area di memoria dove leggere i dati letti
+ * @param length lunghezza del buffer da leggere
+ *
+ * @return <=0 se c'e' stato un errore
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
+ */
 int readBuffer(long connfd, char *buffer, unsigned int length);
 
+/**
+ * @function sendBuffer
+ * @brief Invia un buffer 
+ *
+ * @param fd     descrittore della connessione
+ * @param buffer area di memoria dove scrivere i dati letti
+ * @param length lunghezza del buffer da scriveres
+ *
+ * @return <=0 se c'e' stato un errore
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
+ */
 int sendBuffer(long connfd, char *buffer, unsigned int length);
 
 #endif /* CONNECTIONS_H_ */

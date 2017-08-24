@@ -1,3 +1,16 @@
+#
+# chatterbox Progetto del corso di LSO 2017
+#
+# Dipartimento di Informatica Università di Pisa
+# Docenti: Prencipe, Torquati
+#
+# Autore: Gaspare Ferraro CORSO B - Matricola 520549
+# Tale sorgente è, in ogni sua parte, opera originale di Gaspare Ferraro
+#
+# @file script.sh
+# @brief script con le funzionalità richieste
+#
+
 #!/bin/bash
 
 # Se ho meno di due parametri 
@@ -95,7 +108,7 @@ then
 # Altrimenti errore
 else
 
-    echo "Error: Time must be greater or equal to 0!" 1>&2
+    echo "Errore: il tempo deve essere maggiore di 0!" 1>&2
     exit 3
 
 fi

@@ -33,6 +33,17 @@
 #include <stdio.h>
 #include <config.h>
 
+/**
+ * @function openConnection
+ * @brief Apre una connessione AF_UNIX verso il server
+ *
+ * @param path Path del socket AF_UNIX
+ * @param ntimes numero massimo di tentativi di retry
+ * @param secs tempo di attesa tra due retry consecutive
+ *
+ * @return il descrittore associato alla connessione in caso di successo
+ *         -1 in caso di errore
+ */
 int openConnection(char *path, unsigned int ntimes, unsigned int secs) {
   int fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
@@ -44,7 +55,7 @@ int openConnection(char *path, unsigned int ntimes, unsigned int secs) {
 
   if (ntimes > MAX_RETRIES) ntimes = MAX_RETRIES;
   if (secs > MAX_SLEEPING) secs = MAX_SLEEPING;
-
+  // prova a connettersi ntimes volte, aspettando secs secondi dopo ogni tentativo
   while (ntimes-- && connect(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
     if (errno == ENOENT)
       sleep(secs);
@@ -55,6 +66,17 @@ int openConnection(char *path, unsigned int ntimes, unsigned int secs) {
   return fd;
 }
 
+/**
+ * @function readBuffer
+ * @brief Legge un buffer 
+ *
+ * @param fd     descrittore della connessione
+ * @param buffer area di memoria dove leggere i dati letti
+ * @param length lunghezza del buffer da leggere
+ *
+ * @return <=0 se c'e' stato un errore
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
+ */
 int readBuffer(long connfd, char *buffer, unsigned int length) {
   char *tmp = buffer;
   while (length > 0) {
@@ -66,6 +88,16 @@ int readBuffer(long connfd, char *buffer, unsigned int length) {
   return 1;
 }
 
+/**
+ * @function readHeader
+ * @brief Legge l'header del messaggio
+ *
+ * @param fd     descrittore della connessione
+ * @param hdr    puntatore all'header del messaggio da ricevere
+ *
+ * @return <=0 se c'e' stato un errore
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
+ */
 int readHeader(long connfd, message_hdr_t *hdr) {
   memset(hdr, 0, sizeof(message_hdr_t));
   int tmp = read(connfd, hdr, sizeof(message_hdr_t));
@@ -73,6 +105,16 @@ int readHeader(long connfd, message_hdr_t *hdr) {
   return 1;
 }
 
+/**
+ * @function readData
+ * @brief Legge il body del messaggio
+ *
+ * @param fd     descrittore della connessione
+ * @param data   puntatore al body del messaggio
+ *
+ * @return <=0 se c'e' stato un errore
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
+ */
 int readData(long connfd, message_data_t *data) {
   memset(data, 0, sizeof(message_data_t));
   int tmp = read(connfd, &(data->hdr), sizeof(message_data_hdr_t));
@@ -91,6 +133,16 @@ int readData(long connfd, message_data_t *data) {
   return 1;
 }
 
+/**
+ * @function readMsg
+ * @brief Legge l'intero messaggio
+ *
+ * @param fd     descrittore della connessione
+ * @param data   puntatore al messaggio
+ *
+ * @return <=0 se c'e' stato un errore
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
+ */
 int readMsg(long connfd, message_t *msg) {
   memset(msg, 0, sizeof(message_t));
   int tmp = readHeader(connfd, &(msg->hdr));
@@ -100,6 +152,17 @@ int readMsg(long connfd, message_t *msg) {
   return 1;
 }
 
+/**
+ * @function sendBuffer
+ * @brief Invia un buffer 
+ *
+ * @param fd     descrittore della connessione
+ * @param buffer area di memoria dove scrivere i dati letti
+ * @param length lunghezza del buffer da scriveres
+ *
+ * @return <=0 se c'e' stato un errore
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
+ */
 int sendBuffer(long connfd, char *buffer, unsigned int length) {
   while (length > 0) {
     int wrote = write(connfd, buffer, length);
@@ -110,6 +173,15 @@ int sendBuffer(long connfd, char *buffer, unsigned int length) {
   return 1;
 }
 
+/**
+ * @function sendRequest
+ * @brief Invia un messaggio di richiesta al server
+ *
+ * @param fd     descrittore della connessione
+ * @param msg    puntatore al messaggio da inviare
+ *
+ * @return <=0 se c'e' stato un errore
+ */
 int sendRequest(long connfd, message_t *msg) {
   int tmp = sendHeader(connfd, &(msg->hdr));
   if (tmp < 0) return -1;
@@ -118,6 +190,15 @@ int sendRequest(long connfd, message_t *msg) {
   return 1;
 }
 
+/**
+ * @function sendData
+ * @brief Invia il body del messaggio al server
+ *
+ * @param fd     descrittore della connessione
+ * @param msg    puntatore al messaggio da inviare
+ *
+ * @return <=0 se c'e' stato un errore
+ */
 int sendData(long connfd, message_data_t *data) {
   int tmp = write(connfd, &(data->hdr), sizeof(message_data_hdr_t));
   if (tmp < 0) return -1;
@@ -126,6 +207,16 @@ int sendData(long connfd, message_data_t *data) {
   return 1;
 }
 
+/**
+ * @function sendHeader
+ * @brief Invia l'header del messaggio
+ *
+ * @param fd     descrittore della connessione
+ * @param hdr    puntatore all'header del messaggio da inviare
+ *
+ * @return <=0 se c'e' stato un errore
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
+ */
 int sendHeader(long connfd, message_hdr_t *msg) {
   int tmp = write(connfd, msg, sizeof(message_hdr_t));
   if (tmp < 0) return -1;
