@@ -50,7 +50,7 @@ kill -USR1 $pid
 sleep 1
 
 # termino i client in ascolto
-#kill -TERM $pid1 $pid2
+kill -TERM $pid1 $pid2
 
 sleep 1
 

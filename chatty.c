@@ -1,9 +1,11 @@
 /*
- * membox Progetto del corso di LSO 2017
+ * chatterbox Progetto del corso di LSO 2017
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
  *
+ * Autore: Gaspare Ferraro CORSO B - Matricola 520549
+ * Tale sorgente è, in ogni sua parte, opera originale di Gaspare Ferraro
  */
 /**
  * @file chatty.c
@@ -42,41 +44,66 @@
 
 /* struttura che memorizza le statistiche del server, struct statistics
  * e' definita in stats.h.
- *
  */
 static pthread_mutex_t mtx_stats = PTHREAD_MUTEX_INITIALIZER;
 struct statistics chattyStats = {0, 0, 0, 0, 0, 0, 0};
+
+/* struttura che memorizza le configurazioni del server, 
+ * struct serverConfiguration configuration.h
+ */
 struct serverConfiguration configuration = {0, 0, 0, 0, 0, NULL, NULL, NULL};
 
+// USo del server
 static void usage(const char *progname) {
   fprintf(stderr, "Il server va lanciato con il seguente comando:\n");
   fprintf(stderr, "  %s -f conffile\n", progname);
 }
 
+// Struttura da passare al Thread
 struct worker_arg {
   unsigned long index;
 };
 
 // Segnatura delle funzioni utilizzate
+
+// Aggiornamento in M.E. delle statistiche
 void update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
                   int file_pen, int err);
+
+// Gestione dei segnali, registra i segnali necessari
 int signals_handler();
+
+// Richiede la terminazione in modo sicuro i Thread
 void stop_server();
+
+// Stampa delle statistiche
 void print_stats();
+
+// Funzione iniziale dei Thread dei ThreadPool
 void *worker(void *arg);
+
+// Esecuzione di un comando su socket
 int execute(message_t msg, int client_fd);
 
+// Flag di controllo per la terminazione
 int stopped;
 
+// Set di FD per la select
 static pthread_mutex_t mtx_set = PTHREAD_MUTEX_INITIALIZER;
 fd_set set;
 
+// Coda per la gestione delle richieste dei client
 queue_t *Q;
 
+// ThreadPool e argomenti dei Thread
 pthread_t *threadPool;
 struct worker_arg *threadArg;
 
+// Gestore degli utenti
 user_manager_t *user_manager;
+
+// Gestore dei gruppi
+group_manager_t *group_manager;
 
 int main(int argc, char *argv[]) {
   // Controllo uso corretto degli qrgomenti
@@ -114,6 +141,9 @@ int main(int argc, char *argv[]) {
   printf("Creo user manager...\n");
   user_manager = create_user_manager(configuration.maxHistMsgs,
                                      configuration.maxConnections);
+
+  printf("Creo group manager...\n");
+  group_manager = create_group_manager(user_manager, configuration.maxConnections);
 
   printf("Creo socket!\n");
   int sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -179,6 +209,7 @@ int main(int argc, char *argv[]) {
           printf("Errore FD = %d\n", fd);
         } else if (fd == sock_fd) {
           // New client
+	  
           fd_c = accept(sock_fd, NULL, 0);
           printf("Accept FD = %d!\n", fd_c);
 
@@ -215,21 +246,20 @@ int main(int argc, char *argv[]) {
   printf("Chiudo sock_fd...\n");
   close(sock_fd);
 
-  printf("Distrutto coda...\n");
+  printf("Distruggo coda...\n");
   delete_queue(Q);
 
-  printf("Distrutto usermanager...\n");
+  printf("Distruggo usermanager...\n");
   destroy_user_manager(user_manager);
+
+  printf("Distruggo groupmanager...\n");
+  destroy_group_manager(group_manager);
 
   printf("Free threadPool...\n");
   free(threadPool);
   free(threadArg);
 
   printf("Free configuration string...\n");
-  printf("DIR:  [%s]\n", configuration.dirName);
-  printf("PATH: [%s]\n", configuration.unixPath);
-  printf("STAT: [%s]\n", configuration.statFileName);
-
   free(configuration.dirName);
   free(configuration.unixPath);
   free(configuration.statFileName);
@@ -237,10 +267,6 @@ int main(int argc, char *argv[]) {
   configuration.dirName = NULL;
   configuration.unixPath = NULL;
   configuration.statFileName = NULL;
-
-  printf("DIR:  [%s]\n", configuration.dirName);
-  printf("PATH: [%s]\n", configuration.unixPath);
-  printf("STAT: [%s]\n", configuration.statFileName);
 
   printf("Return\n");
   return 0;
@@ -537,7 +563,7 @@ int execute(message_t received, int client_fd) {
         update_stats(0, 0, 0, 1, 0, 0, 0);
         setHeader(&(reply.hdr), OP_OK, "");
         received.hdr.op = TXT_MESSAGE;
-         post_msg(user_manager, receiver, &received);
+        post_msg(user_manager, receiver, &received);
       } else  // non registrato
       {
         // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
@@ -905,26 +931,111 @@ int execute(message_t received, int client_fd) {
 
     // richiesta di creazione di un gruppo
     case CREATEGROUP_OP: {
+
       printf("\t\t\tINIZIO OP CREATEGROUP SENDER[%s]\n", sender);
-      // TODO
+      fflush(stdout);
+      char *receiver = received.data.hdr.receiver;
+      int rec_fd = connected_user(user_manager, receiver);
+      printf("\t\t\t\tCREO GROUP[%s]\n",receiver);
+      fflush(stdout);
+      if( rec_fd == -2 )
+      {
+        int ret = create_group(group_manager, receiver);
+        if( ret == 1 )
+        {
+          printf("\t\t\t\tCREO GROUP[%s]\n",receiver);
+          fflush(stdout);
+      char *member = (char*)malloc(sizeof(char)*(1+strlen(sender)));
+      memset(member, 0, sizeof(char)*(1+strlen(sender)));
+      strncpy(member, sender, sizeof(char)*(1+strlen(sender)));
+          ret = join_group(group_manager, receiver, member);
+          if( ret == 1 )
+          {
+            printf("\t\t\t\tJOIN GROUP[%s]\n",receiver);
+            fflush(stdout);
+            setHeader(&(reply.hdr), OP_OK, "");
+          }
+          else
+          {
+            printf("\t\t\t\tNO GROUP[%s]\n",receiver);
+            fflush(stdout);
+            setHeader(&(reply.hdr), OP_FAIL, "");
+          }  
+        }
+        else
+        {
+          printf("\t\t\t\tNO CREO GROUP[%s]\n",receiver);
+          fflush(stdout);
+          setHeader(&(reply.hdr), OP_NICK_ALREADY, "");
+        }
+      }
+      else
+      {
+        printf("\t\t\t\tNO CREO GROUP[%s]\n",receiver);
+        fflush(stdout);
+        setHeader(&(reply.hdr), OP_NICK_ALREADY, "");
+      }
+      int tmp = sendHeader(client_fd, &(reply.hdr));
       free(received.data.buf);
       printf("\t\t\tFINE OP CREATEGROUP SENDER[%s]\n", sender);
+      fflush(stdout);
+      if( tmp < 0 ) return -1;
     } break;
 
     // richiesta di aggiunta ad un gruppo
     case ADDGROUP_OP: {
       printf("\t\t\tINIZIO OP ADDGROUP SENDER[%s]\n", sender);
-      // TODO
+      char *receiver = received.data.hdr.receiver;
+      char *member = (char*)malloc(sizeof(char)*(1+strlen(sender)));
+      memset(member, 0, sizeof(char)*(1+strlen(sender)));
+      strncpy(member, sender, sizeof(char)*(1+strlen(sender)));
+      int ret = join_group(group_manager, receiver, member);
+      
+      if( ret == 1 )
+      {
+        printf("\t\t\t\tSI JOIN[%s]\n",receiver);
+        setHeader(&(reply.hdr), OP_OK, "");
+      }
+      else
+      {
+        printf("\t\t\t\tNO JOIN[%s]\n",receiver);
+        setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
+      }
+      int tmp = sendHeader(client_fd, &(reply.hdr));
       free(received.data.buf);
       printf("\t\t\tFINE OP ADDGROUP SENDER[%s]\n", sender);
+      if( tmp < 0 ) return -1;
     } break;
 
     // richiesta di rimozione da un gruppo
     case DELGROUP_OP: {
       printf("\t\t\tINIZIO OP DELGROUP SENDER[%s]\n", sender);
-      // TODO
+      fflush(stdout);
+      char *receiver = received.data.hdr.receiver;
+
+      char *member = (char*)malloc(sizeof(char)*(1+strlen(sender)));
+      memset(member, 0, sizeof(char)*(1+strlen(sender)));
+      strncpy(member, sender, sizeof(char)*(1+strlen(sender)));
+
+      int ret = leave_group(group_manager, receiver, member);
+      free(member);
+      if( ret == 1 )
+      {
+        printf("\t\t\t\tSI LEAVE[%s]\n",receiver);
+        fflush(stdout);
+        setHeader(&(reply.hdr), OP_OK, "");
+      }
+      else
+      {
+        printf("\t\t\t\tNO LEAVE[%s]\n",receiver);
+        fflush(stdout);
+        setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
+      }
+      int tmp = sendHeader(client_fd, &(reply.hdr));
       free(received.data.buf);
       printf("\t\t\tFINE OP DELGROUP SENDER[%s]\n", sender);
+      fflush(stdout);
+      if( tmp < 0 ) return -1;
     } break;
 
     default: { } break; }

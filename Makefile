@@ -13,7 +13,7 @@ FILE_DA_CONSEGNARE=Makefile chatty.c message.h ops.h stats.h config.h \
 		   DATA/chatty.conf1 DATA/chatty.conf2 connections.c connections.h \
 		   configuration.h configuration.c \
 	           group.h group.c user.h user.c icl_hash.h icl_hash.c \
-		   queue.h queue.c list.h list.c
+		   queue.h queue.c list.h list.c group.h group.c
 
 # inserire il nome del tarball: es. NinoBixio
 TARNAME=GaspareFerraro

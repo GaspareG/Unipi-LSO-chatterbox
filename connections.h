@@ -3,39 +3,41 @@
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
+ * Autore: Gaspare Ferraro CORSO B - Matricola 520549
+ * Tale sorgente è, in ogni sua parte, opera originale di Gaspare Ferraro
  */
+/**
+ * @file  connection.h
+ * @brief Contiene le funzioni che implementano il protocollo
+ *        tra i clients ed il server
+ */
+
 #ifndef CONNECTIONS_H_
 #define CONNECTIONS_H_
 
-#define MAX_RETRIES     10
-#define MAX_SLEEPING     3
+#define MAX_RETRIES 10
+#define MAX_SLEEPING 3
 #if !defined(UNIX_PATH_MAX)
-#define UNIX_PATH_MAX  64
+#define UNIX_PATH_MAX 64
 #endif
 
 #include <message.h>
 
 /**
- * @file  connection.h
- * @brief Contiene le funzioni che implementano il protocollo 
- *        tra i clients ed il server
- */
-
-/**
  * @function openConnection
- * @brief Apre una connessione AF_UNIX verso il server 
+ * @brief Apre una connessione AF_UNIX verso il server
  *
- * @param path Path del socket AF_UNIX 
+ * @param path Path del socket AF_UNIX
  * @param ntimes numero massimo di tentativi di retry
  * @param secs tempo di attesa tra due retry consecutive
  *
  * @return il descrittore associato alla connessione in caso di successo
  *         -1 in caso di errore
  */
-int openConnection(char* path, unsigned int ntimes, unsigned int secs);
+int openConnection(char *path, unsigned int ntimes, unsigned int secs);
 
-// -------- server side ----- 
+// -------- server side -----
 /**
  * @function readHeader
  * @brief Legge l'header del messaggio
@@ -43,8 +45,8 @@ int openConnection(char* path, unsigned int ntimes, unsigned int secs);
  * @param fd     descrittore della connessione
  * @param hdr    puntatore all'header del messaggio da ricevere
  *
- * @return <=0 se c'e' stato un errore 
- *         (se <0 errno deve essere settato, se == 0 connessione chiusa) 
+ * @return <=0 se c'e' stato un errore
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
  */
 int readHeader(long connfd, message_hdr_t *hdr);
 /**
@@ -55,7 +57,7 @@ int readHeader(long connfd, message_hdr_t *hdr);
  * @param data   puntatore al body del messaggio
  *
  * @return <=0 se c'e' stato un errore
- *         (se <0 errno deve essere settato, se == 0 connessione chiusa) 
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
  */
 int readData(long fd, message_data_t *data);
 
@@ -67,17 +69,16 @@ int readData(long fd, message_data_t *data);
  * @param data   puntatore al messaggio
  *
  * @return <=0 se c'e' stato un errore
- *         (se <0 errno deve essere settato, se == 0 connessione chiusa) 
+ *         (se <0 errno deve essere settato, se == 0 connessione chiusa)
  */
 int readMsg(long fd, message_t *msg);
 
 /* da completare da parte dello studente con altri metodi di interfaccia */
 
-
 // ------- client side ------
 /**
  * @function sendRequest
- * @brief Invia un messaggio di richiesta al server 
+ * @brief Invia un messaggio di richiesta al server
  *
  * @param fd     descrittore della connessione
  * @param msg    puntatore al messaggio da inviare
@@ -97,9 +98,8 @@ int sendRequest(long fd, message_t *msg);
  */
 int sendData(long fd, message_data_t *msg);
 
-
-
-/* da completare da parte dello studente con eventuali altri metodi di interfaccia */
+/* da completare da parte dello studente con eventuali altri metodi di
+ * interfaccia */
 
 int sendHeader(long connfd, message_hdr_t *msg);
 

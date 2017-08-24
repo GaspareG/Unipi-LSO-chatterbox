@@ -1,10 +1,17 @@
 /*
-* chatterbox Progetto del corso di LSO 2017
-*
-* Dipartimento di Informatica Università di Pisa
-* Docenti: Prencipe, Torquati
-*
-*/
+ * chatterbox Progetto del corso di LSO 2017
+ *
+ * Dipartimento di Informatica Università di Pisa
+ * Docenti: Prencipe, Torquati
+ *
+ * Autore: Gaspare Ferraro CORSO B - Matricola 520549
+ * Tale sorgente è, in ogni sua parte, opera originale di Gaspare Ferraro
+ */
+/**
+ * @file user.c
+ * @brief Implementazione delle funzioni per la gestione 
+ *        degli utenti sul server
+ */
 
 #ifndef USER_C_
 #define USER_C_
@@ -55,7 +62,6 @@ int register_user(user_manager_t *user_manager, char *name) {
     user_t *user = (user_t *)malloc(sizeof(user_t));
     strncpy(user->name, name, MAX_NAME_LENGTH + 1);
     user->history = create_list(user_manager->history_size);
-    // user->groups = create_list(0);
     user->user_fd = -1;
     icl_entry_t *ins_ret =
         icl_hash_insert(user_manager->hash, user->name, (void *)user);
@@ -76,16 +82,10 @@ int connect_user(user_manager_t *user_manager, char *name, unsigned long fd) {
     icl_entry_t *ins_ret = icl_hash_insert(user_manager->fd, &(user->user_fd),
                                            (void *)(user->name));
     if (ins_ret == NULL) {
-       printf("connect_user[ERRORE FD] FD=%ld USER=%s HASH(%d)\n",
-       user->user_fd, user->name, ulong_hash_function( &(user->user_fd)));
       ret = -1;
-    }else
-       user_manager->connected = (user_manager->connected) + 1;
-    printf("*******CONNECT [%s]**********\n",name);
-    // printf("connect_user[%s] trovato!\n", name);
-  }
-  else
-    printf("*******GIALLOGATO [%s]**********\n",name);
+    } else
+      user_manager->connected = (user_manager->connected) + 1;
+  } 
   pthread_mutex_unlock(user_manager->mtx);
   return ret;
 }
@@ -97,10 +97,7 @@ int unregister_user(user_manager_t *user_manager, char *name) {
   user_t *user = (user_t *)icl_hash_find(user_manager->hash, (void *)name);
   if (user != NULL) {
     ret = 0;
-    icl_hash_delete(user_manager->hash, name, NULL, free_user); // TODO: MEMCHECK
-    //destroy_list(user->history);
-    //free(user->history);
-    // TODO
+    icl_hash_delete(user_manager->hash, name, NULL, free_user);
   }
   pthread_mutex_unlock(user_manager->mtx);
   return ret;
@@ -113,7 +110,6 @@ int disconnect_user(user_manager_t *user_manager, char *name) {
   user_t *user = (user_t *)icl_hash_find(user_manager->hash, (void *)name);
   if (user != NULL) {
     ret = 0;
-    printf("*******DISCONNECT [%s]**********\n",name);
     user_manager->connected = (user_manager->connected) - 1;
     user->user_fd = -1;
     icl_hash_delete(user_manager->fd, &(user->user_fd), NULL, NULL);
@@ -132,7 +128,6 @@ int disconnect_fd_user(user_manager_t *user_manager, unsigned long fd) {
         (user_t *)icl_hash_find(user_manager->hash, (void *)username);
     if (user != NULL) {
       ret = 0;
-      printf("*******DISCONNECT [%s]**********\n",username);
       user_manager->connected = (user_manager->connected) - 1;
       icl_hash_delete(user_manager->fd, &(user->user_fd), NULL, NULL);
       user->user_fd = -1;
@@ -145,10 +140,8 @@ int disconnect_fd_user(user_manager_t *user_manager, unsigned long fd) {
 // Restituisce la lista degli utenti come stringa
 int user_list(user_manager_t *user_manager, char **list) {
   int ret = -1;
-  // printf("user_list lock(%d)\n", ret);
   pthread_mutex_lock(user_manager->mtx);
   ret = user_manager->connected;
-  // printf("user_list(%d)\n", ret);
   int i;
   icl_entry_t *j;
   char *kp;
@@ -162,7 +155,6 @@ int user_list(user_manager_t *user_manager, char **list) {
       tmp += MAX_NAME_LENGTH + 1;
     }
   }
-  // printf("user_list end(%d)\n", ret);
   pthread_mutex_unlock(user_manager->mtx);
   return ret;
 }
@@ -170,10 +162,8 @@ int user_list(user_manager_t *user_manager, char **list) {
 // Restituisce la lista di fd degli online
 int fd_list(user_manager_t *user_manager, int **list) {
   int ret = 0;
-  // printf("user_list lock(%d)\n", ret);
   pthread_mutex_lock(user_manager->mtx);
   ret = user_manager->connected;
-  // printf("user_list(%d)\n", ret);
   int i;
   icl_entry_t *j;
   char *kp;
@@ -184,7 +174,6 @@ int fd_list(user_manager_t *user_manager, int **list) {
   icl_hash_foreach(user_manager->hash, i, j, kp, dp) {
     if (dp->user_fd != -1) (*list)[tmp++] = dp->user_fd;
   }
-  // printf("user_list end(%d)\n", ret);
   pthread_mutex_unlock(user_manager->mtx);
   return ret;
 }
@@ -196,17 +185,14 @@ int post_msg(user_manager_t *user_manager, char *name, message_t *msg) {
 
   user_t *user = (user_t *)icl_hash_find(user_manager->hash, (void *)name);
   if (user != NULL) {
-    printf("\t\t\t\tpost_msg(%s) trovato, msg = %s\n", name, msg->data.buf);
     ret = 0;
-    message_t *ret = (message_t*) push_list(user->history, (void *)copyMsg(msg));
-    if( ret != NULL )
-    {
-       printf("\t\t\t\t############RET########\n");
-       free(ret->data.buf);
-       free(ret);
+    message_t *ret =
+        (message_t *)push_list(user->history, (void *)copyMsg(msg));
+    if (ret != NULL) {
+      free(ret->data.buf);
+      free(ret);
     }
-  } else
-    printf("\t\t\t\tpost_msg(%s) non trovato\n", name);
+  } 
   pthread_mutex_unlock(user_manager->mtx);
   return ret;
 }
@@ -222,12 +208,10 @@ int post_msg_all(user_manager_t *user_manager, message_t *msg) {
   icl_hash_foreach(user_manager->hash, i, j, kp, dp) {
     if (dp->user_fd != -1) continue;
     ret++;
-    message_t *ret = (message_t*) push_list(dp->history, (void *)copyMsg(msg));
-    if( ret != NULL )
-    {
-       printf("\t\t\t\t############RET########\n");
-       free(ret->data.buf);
-       free(ret);
+    message_t *ret = (message_t *)push_list(dp->history, (void *)copyMsg(msg));
+    if (ret != NULL) {
+      free(ret->data.buf);
+      free(ret);
     }
   }
   pthread_mutex_unlock(user_manager->mtx);
@@ -235,15 +219,13 @@ int post_msg_all(user_manager_t *user_manager, message_t *msg) {
 }
 
 // retrieve message list
-list_t* retrieve_user_msg(user_manager_t *user_manager, char *name) {
+list_t *retrieve_user_msg(user_manager_t *user_manager, char *name) {
   list_t *ret = NULL;
   pthread_mutex_lock(user_manager->mtx);
   user_t *user = (user_t *)icl_hash_find(user_manager->hash, (void *)name);
-  printf("\t\t\t\t\tOK %s\n", name);
   if (user != NULL) {
-    ret = user->history; 
+    ret = user->history;
   }
-  printf("\t\t\t\t\tOK2 %s\n", name);
   pthread_mutex_unlock(user_manager->mtx);
   return ret;
 }
@@ -251,21 +233,17 @@ list_t* retrieve_user_msg(user_manager_t *user_manager, char *name) {
 // is user connected
 int connected_user(user_manager_t *user_manager, char *name) {
   int ret = -2;
-  printf("\t\t\t\t\tCONNECT 1\n");
   pthread_mutex_lock(user_manager->mtx);
   user_t *user = (user_t *)icl_hash_find(user_manager->hash, (void *)name);
-  printf("\t\t\t\t\tCONNECT 2\n");
   if (user != NULL) {
     ret = user->user_fd;
-  printf("\t\t\t\t\tCONNECT 3\n");
   }
   pthread_mutex_unlock(user_manager->mtx);
   return ret;
 }
 
-
-void free_msg(void *msg){
-  message_t *tmp = (message_t*) msg;
+void free_msg(void *msg) {
+  message_t *tmp = (message_t *)msg;
   free(tmp->data.buf);
   tmp->data.buf = NULL;
   free(tmp);

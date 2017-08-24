@@ -1,9 +1,16 @@
- /*
- * chatterbox Progetto del corso di LSO 2017 
+/*
+ * chatterbox Progetto del corso di LSO 2017
  *
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
- * 
+ *
+ * Autore: Gaspare Ferraro CORSO B - Matricola 520549
+ * Tale sorgente è, in ogni sua parte, opera originale di Gaspare Ferraro
+ */
+/**
+ * @file list.h
+ * @brief Dichiarazioni strutture e funzioni per le operazioni
+ *        su una coda
  */
 
 #ifndef LIST_H_
@@ -17,22 +24,22 @@
 
 typedef struct list_node_t {
   void *data;
-  struct list_node_t *next;	
+  struct list_node_t *next;
 } list_node_t;
 
 typedef struct {
   list_node_t *front;
   list_node_t *back;
   unsigned long cursize;
-  unsigned long size; // 0 = no limit
+  unsigned long size;  // 0 = no limit
 } list_t;
 
-list_t* create_list(unsigned long size);
+list_t *create_list(unsigned long size);
 
-list_node_t* push_list(list_t *lst, void *data);
+list_node_t *push_list(list_t *lst, void *data);
 
-void* pop_list(list_t *lst);
+void *pop_list(list_t *lst);
 
-void destroy_list(list_t *lst, void (*free_data)(void*));
+void destroy_list(list_t *lst, void (*free_data)(void *));
 
 #endif /* LIST_H_ */

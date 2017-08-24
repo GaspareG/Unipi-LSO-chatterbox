@@ -104,7 +104,6 @@ static int downloadFile(int connfd, char *filename, char *sender) {
     message_t msg;
     setHeader(&msg.hdr, GETFILE_OP, sender);
     setData(&msg.data, "", filename, strlen(filename)+1);
-    printf("MANDO RICHIESTA (op=%d,from=%s,to=%s,len=%u,buf=%s)\n", msg.hdr.op, msg.hdr.sender, msg.data.hdr.receiver, msg.data.hdr.len, msg.data.buf);
     int status = sendRequest(connfd, &msg);
     if (status == -1)  return -1;
     for( ; ;) {
@@ -173,7 +172,6 @@ static int execute_requestreply(int connfd, operation_t *o) {
     } 
     
     // spedizione effettiva
-    printf("MANDO RICHIESTA (op=%d,from=%s,to=%s,len=%u,buf=%s)\n", msg.hdr.op, msg.hdr.sender, msg.data.hdr.receiver, msg.data.hdr.len, msg.data.buf);
     int status = sendRequest(connfd, &msg); 
     if ( status == -1) {
 	perror("request");
@@ -182,9 +180,7 @@ static int execute_requestreply(int connfd, operation_t *o) {
     if (mappedfile) { // devo inviare il file
 	message_data_t data;
 	setData(&data, "", mappedfile, o->size);
-	printf("MANDO FILE\n");
 	int status2 = sendData(connfd, &data); 
-	printf("MANDO FILE FINE\n");
 	if (status2 == -1) { // invio il contenuto del file
 	    perror("sending data");
 	    fprintf(stderr, "ERRORE: spedendo il file %s\n", o->msg);
@@ -426,6 +422,7 @@ int main(int argc, char *argv[]) {
         case 'd': {
 	    nickneeded = 1;
 	    ops[k].sname = nick;
+
 	    ops[k].rname = strdup(optarg);
 	    ops[k].op    = DELGROUP_OP;
 	    ops[k].msg   = NULL;

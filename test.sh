@@ -1,14 +1,34 @@
-./client -l /tmp/chatty_socket -c Gaspare1;
-./client -l /tmp/chatty_socket -c Gaspare2;
-./client -l /tmp/chatty_socket -c Gaspare3;
-./client -l /tmp/chatty_socket -c Gaspare4;
+./client -l $1 -c pippo &
+./client -l $1 -c pluto &
+./client -l $1 -c minni &
+./client -l $1 -c topolino &
+./client -l $1 -c paperino &
+./client -l $1 -c qui &
+echo "OK"
+wait
+echo "OK"
+./client -l $1 -k pippo -g gruppo1
+echo "OK"
+./client -l $1 -k pluto -g gruppo2
+echo "OK"
+./client -l $1 -k minni -a gruppo1
+echo "OK"
+./client -l $1 -k topolino -a gruppo1
+echo "OK"
+./client -l $1 -k paperino -a gruppo2
+echo "OK"
+./client -l $1 -k minni -a gruppo2
+echo "OK"
+./client -l $1 -k pippo -p
+echo "OK"
+./client -l $1 -k pluto -p
+echo "OK"
+./client -l $1 -k minni -p
+echo "OK"
+./client -l $1 -k topolino -p
+echo "OK"
+./client -l $1 -k topolino -d gruppo1
+echo "OK"
+./client -l $1 -k minni -d gruppo2
+echo "OK"
 
-./client -l /tmp/chatty_socket -k Gaspare1 -S ciao1:;
-./client -l /tmp/chatty_socket -k Gaspare2 -S ciao1:;
-./client -l /tmp/chatty_socket -k Gaspare3 -S ciao1:;
-./client -l /tmp/chatty_socket -k Gaspare4 -S ciao1:;
-
-./client -l /tmp/chatty_socket -k Gaspare1 -p;
-./client -l /tmp/chatty_socket -k Gaspare2 -p;
-./client -l /tmp/chatty_socket -k Gaspare3 -p;
-./client -l /tmp/chatty_socket -k Gaspare4 -p;
