@@ -29,7 +29,8 @@ void push_list(list_t *lst, void *data)
   if( lst->size > 0 && lst->cursize == lst->size ) pop_list(lst);
 
   list_node_t *to_add = (list_node_t*) malloc(sizeof(list_node_t));
-	
+  memset(to_add, 0, sizeof(list_node_t));
+
   to_add->data = data;
   printf("PUSH DATA = %s\n", ((message_t*) data)->data.buf);
   to_add->next = NULL;
@@ -47,21 +48,22 @@ void* pop_list(list_t *lst)
 {
   if( lst->cursize == 0 ) return NULL;
   void *ret = (lst->front)->data;
+  list_node_t *old = lst->front;
   if( lst->cursize == 1 ) 
     lst->front = lst->back = NULL;
   else
     lst->front = (lst->front)->next;
   lst->cursize--;
+  free(old);
   printf("POP DATA = %s\n", ((message_t*)ret)->data.buf);
   return ret;
 }
 
 void destroy_list(list_t *lst)
 {
-	char *tmp ;
-	tmp = NULL;
-	while( (tmp = pop_list(lst)) != NULL ) free(tmp);
-	//free(lst);
+  char *tmp ;
+  tmp = NULL;
+  while( (tmp = pop_list(lst)) != NULL ) free(tmp);
 }
 
 #endif /* LIST_C_ */

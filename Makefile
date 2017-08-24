@@ -60,6 +60,7 @@ OBJECTS		= configuration.o \
 		  user.o \
 		  group.o \
 		  queue.o \
+		  listener.o \
 		  list.o
  
 # aggiungere qui gli altri include 
@@ -140,7 +141,7 @@ test2:
 	make cleanall
 	\mkdir -p $(DIR_PATH)
 	make all
-	./chatty -f DATA/chatty.conf1&
+	./chatty -f DATA/chatty.conf1 > out.txt&
 	./testfile.sh $(UNIX_PATH) $(DIR_PATH)
 	killall -QUIT -w chatty
 	@echo "********** Test2 superato!"
@@ -150,7 +151,7 @@ test3:
 	make cleanall
 	\mkdir -p $(DIR_PATH)
 	make all
-	./chatty -f DATA/chatty.conf2&
+	./chatty -f DATA/chatty.conf2 > out.txt &
 	./testconf.sh $(UNIX_PATH) $(STAT_PATH)
 	killall -QUIT -w chatty
 	@echo "********** Test3 superato!"
@@ -169,7 +170,7 @@ test5:
 	make cleanall
 	\mkdir -p $(DIR_PATH)
 	make all
-	./chatty -f DATA/chatty.conf1&
+	./chatty -f DATA/chatty.conf1 &
 	./teststress.sh $(UNIX_PATH)
 	killall -QUIT -w chatty
 	@echo "********** Test5 superato!"
@@ -179,7 +180,7 @@ test6:
 	make cleanall
 	\mkdir -p $(DIR_PATH)
 	make all
-	./chatty -f DATA/chatty.conf1&
+	./chatty -f DATA/chatty.conf1 > out.txt&
 	./testgroups.sh $(UNIX_PATH)
 	killall -QUIT -w chatty
 	@echo "********** Test6 superato!"

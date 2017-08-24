@@ -1,0 +1,366 @@
+Leggo configurazioni...
+Configurazioni lette:
+statFileName 	-> [/tmp/chatty_stats.txt]
+dirName 	-> [/tmp/chatty]
+unixPath 	-> [/tmp/chatty_socket]
+maxHistMsgs 	-> [16]
+maxFileSize 	-> [1024]
+maxMsgSize 	-> [512]
+threadsInPool 	-> [8]
+maxConnections 	-> [32]
+Registro segnali!
+Creo coda richieste...
+Creo user manager...
+Creo socket!
+Bind socket!
+Listen socket!
+Creo ThreadPool!
+Creo Thread 0!
+Creo Thread 1!
+	THREAD[0] Start
+	THREAD[0] Aspetto richiesta dalla coda
+Creo Thread 2!
+	THREAD[1] Start
+	THREAD[1] Aspetto richiesta dalla coda
+Creo Thread 3!
+	THREAD[2] Start
+	THREAD[2] Aspetto richiesta dalla coda
+Creo Thread 4!
+	THREAD[3] Start
+	THREAD[3] Aspetto richiesta dalla coda
+Creo Thread 5!
+Creo Thread 6!
+	THREAD[4] Start
+	THREAD[4] Aspetto richiesta dalla coda
+Creo Thread 7!
+	THREAD[6] Start
+	THREAD[6] Aspetto richiesta dalla coda
+	THREAD[7] Start
+	THREAD[7] Aspetto richiesta dalla coda
+	THREAD[5] Start
+	THREAD[5] Aspetto richiesta dalla coda
+Accept FD = 4!
+Richiesta 4!
+Accept FD = 5!
+	THREAD[0] coda = 4
+	THREAD[0] Servo Client [4]
+	THREAD[0] header(op=0, sender=pippo)
+	THREAD[0] Inizio execute
+			SENDER[pippo] OP[0]
+*******CONNECT [pippo]**********
+			END SENDER[pippo] OP[0]
+	THREAD[0] Fine execute (esito=0)
+	THREAD[0] Esito positivo, rimetto in coda
+	THREAD[0] Aspetto richiesta dalla coda
+Richiesta 5!
+	THREAD[1] coda = 5
+	THREAD[1] Servo Client [5]
+	THREAD[1] header(op=0, sender=minni)
+	THREAD[1] Inizio execute
+			SENDER[minni] OP[0]
+*******CONNECT [minni]**********
+			END SENDER[minni] OP[0]
+	THREAD[1] Fine execute (esito=0)
+	THREAD[1] Esito positivo, rimetto in coda
+	THREAD[1] Aspetto richiesta dalla coda
+Richiesta 4!
+	THREAD[2] coda = 4
+	THREAD[2] Servo Client [4]
+	THREAD[2] header(op=0, sender=)
+	THREAD[2] Inizio execute
+	THREAD[2] Fine execute (esito=-1)
+	THREAD[2] Esito negativo, non rimetto in coda
+*******DISCONNECT [pippo]**********
+	THREAD[2] Aspetto richiesta dalla coda
+Richiesta 5!
+	THREAD[3] coda = 5
+	THREAD[3] Servo Client [5]
+	THREAD[3] header(op=0, sender=)
+	THREAD[3] Inizio execute
+	THREAD[3] Fine execute (esito=-1)
+	THREAD[3] Esito negativo, non rimetto in coda
+*******DISCONNECT [minni]**********
+	THREAD[3] Aspetto richiesta dalla coda
+Accept FD = 6!
+Accept FD = 7!
+Accept FD = 8!
+Richiesta 6!
+	THREAD[4] coda = 6
+	THREAD[4] Servo Client [6]
+	THREAD[4] header(op=0, sender=paperino)
+	THREAD[4] Inizio execute
+			SENDER[paperino] OP[0]
+*******CONNECT [paperino]**********
+			END SENDER[paperino] OP[0]
+	THREAD[4] Fine execute (esito=0)
+	THREAD[4] Esito positivo, rimetto in coda
+	THREAD[4] Aspetto richiesta dalla coda
+Accept FD = 9!
+Richiesta 7!
+Richiesta 8!
+Richiesta 9!
+Richiesta 6!
+	THREAD[0] coda = 7
+	THREAD[5] coda = 9
+	THREAD[7] coda = 8
+	THREAD[7] Servo Client [8]
+	THREAD[7] header(op=0, sender=pluto)
+	THREAD[7] Inizio execute
+			SENDER[pluto] OP[0]
+	THREAD[0] Servo Client [7]
+	THREAD[0] header(op=0, sender=topolino)
+	THREAD[0] Inizio execute
+			SENDER[topolino] OP[0]
+	THREAD[5] Servo Client [9]
+	THREAD[5] header(op=0, sender=quo)
+	THREAD[5] Inizio execute
+			SENDER[quo] OP[0]
+*******CONNECT [pluto]**********
+*******CONNECT [topolino]**********
+			END SENDER[pluto] OP[0]
+	THREAD[7] Fine execute (esito=0)
+	THREAD[7] Esito positivo, rimetto in coda
+	THREAD[7] Aspetto richiesta dalla coda
+	THREAD[7] coda = 6
+	THREAD[7] Servo Client [6]
+	THREAD[7] header(op=0, sender=)
+	THREAD[7] Inizio execute
+	THREAD[7] Fine execute (esito=-1)
+	THREAD[7] Esito negativo, non rimetto in coda
+			END SENDER[topolino] OP[0]
+*******DISCONNECT [paperino]**********
+	THREAD[0] Fine execute (esito=0)
+	THREAD[0] Esito positivo, rimetto in coda
+	THREAD[0] Aspetto richiesta dalla coda
+	THREAD[7] Aspetto richiesta dalla coda
+	THREAD[6] coda = -1
+	THREAD[6] Aspetto richiesta dalla coda
+*******CONNECT [quo]**********
+			END SENDER[quo] OP[0]
+	THREAD[5] Fine execute (esito=0)
+	THREAD[5] Esito positivo, rimetto in coda
+	THREAD[5] Aspetto richiesta dalla coda
+Richiesta 8!
+	THREAD[1] coda = 8
+	THREAD[1] Servo Client [8]
+	THREAD[1] header(op=0, sender=)
+	THREAD[1] Inizio execute
+	THREAD[1] Fine execute (esito=-1)
+	THREAD[1] Esito negativo, non rimetto in coda
+*******DISCONNECT [pluto]**********
+	THREAD[1] Aspetto richiesta dalla coda
+Richiesta 7!
+Richiesta 9!
+	THREAD[2] coda = 7
+	THREAD[2] Servo Client [7]
+	THREAD[2] header(op=0, sender=)
+	THREAD[2] Inizio execute
+	THREAD[2] Fine execute (esito=-1)
+	THREAD[2] Esito negativo, non rimetto in coda
+*******DISCONNECT [topolino]**********
+	THREAD[2] Aspetto richiesta dalla coda
+	THREAD[2] coda = 9
+	THREAD[2] Servo Client [9]
+	THREAD[2] header(op=0, sender=)
+	THREAD[2] Inizio execute
+	THREAD[2] Fine execute (esito=-1)
+	THREAD[2] Esito negativo, non rimetto in coda
+*******DISCONNECT [quo]**********
+	THREAD[2] Aspetto richiesta dalla coda
+Accept FD = 10!
+Accept FD = 11!
+Richiesta 10!
+	THREAD[4] coda = 10
+Richiesta 11!
+	THREAD[3] coda = -1
+	THREAD[3] Aspetto richiesta dalla coda
+	THREAD[3] coda = 11
+	THREAD[0] coda = -1
+	THREAD[0] Aspetto richiesta dalla coda
+	THREAD[3] Servo Client [11]
+	THREAD[3] header(op=0, sender=qua)
+	THREAD[3] Inizio execute
+			SENDER[qua] OP[0]
+	THREAD[4] Servo Client [10]
+	THREAD[4] header(op=0, sender=qui)
+	THREAD[4] Inizio execute
+			SENDER[qui] OP[0]
+*******CONNECT [qui]**********
+			END SENDER[qui] OP[0]
+	THREAD[4] Fine execute (esito=0)
+	THREAD[4] Esito positivo, rimetto in coda
+	THREAD[4] Aspetto richiesta dalla coda
+*******CONNECT [qua]**********
+			END SENDER[qua] OP[0]
+	THREAD[3] Fine execute (esito=0)
+	THREAD[3] Esito positivo, rimetto in coda
+	THREAD[3] Aspetto richiesta dalla coda
+Richiesta 10!
+	THREAD[7] coda = 10
+	THREAD[7] Servo Client [10]
+	THREAD[7] header(op=0, sender=)
+	THREAD[7] Inizio execute
+	THREAD[7] Fine execute (esito=-1)
+	THREAD[7] Esito negativo, non rimetto in coda
+*******DISCONNECT [qui]**********
+	THREAD[7] Aspetto richiesta dalla coda
+Richiesta 11!
+	THREAD[6] coda = 11
+	THREAD[6] Servo Client [11]
+	THREAD[6] header(op=0, sender=)
+	THREAD[6] Inizio execute
+	THREAD[6] Fine execute (esito=-1)
+	THREAD[6] Esito negativo, non rimetto in coda
+*******DISCONNECT [qua]**********
+	THREAD[6] Aspetto richiesta dalla coda
+Accept FD = 12!
+Richiesta 12!
+	THREAD[5] coda = 12
+	THREAD[5] Servo Client [12]
+	THREAD[5] header(op=1, sender=minni)
+	THREAD[5] Inizio execute
+			SENDER[minni] OP[1]
+			INIZIO OP CONNECT SENDER[minni]
+*******CONNECT [minni]**********
+			ESITO CONNECT = 0
+			FINE OP CONNECT SENDER[minni]
+			END SENDER[minni] OP[1]
+	THREAD[5] Fine execute (esito=0)
+	THREAD[5] Esito positivo, rimetto in coda
+	THREAD[5] Aspetto richiesta dalla coda
+Accept FD = 13!
+Richiesta 13!
+	THREAD[1] coda = 13
+	THREAD[1] Servo Client [13]
+	THREAD[1] header(op=1, sender=topolino)
+	THREAD[1] Inizio execute
+			SENDER[topolino] OP[1]
+			INIZIO OP CONNECT SENDER[topolino]
+*******CONNECT [topolino]**********
+			ESITO CONNECT = 0
+			FINE OP CONNECT SENDER[topolino]
+			END SENDER[topolino] OP[1]
+	THREAD[1] Fine execute (esito=0)
+	THREAD[1] Esito positivo, rimetto in coda
+	THREAD[1] Aspetto richiesta dalla coda
+Richiesta 13!
+	THREAD[2] coda = 13
+	THREAD[2] Servo Client [13]
+	THREAD[2] header(op=2, sender=topolino)
+	THREAD[2] Inizio execute
+			SENDER[topolino] OP[2]
+			INIZIO OP POSTTXT SENDER[topolino]
+			LEN = 17
+			FD UTENTE[minni]
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+			FD UTENTE[minni] = 12
+			FINE OP POSTTXT SENDER[topolino]
+			END SENDER[topolino] OP[2]
+	THREAD[2] Fine execute (esito=0)
+	THREAD[2] Esito positivo, rimetto in coda
+	THREAD[2] Aspetto richiesta dalla coda
+Richiesta 13!
+	THREAD[0] coda = 13
+	THREAD[0] Servo Client [13]
+	THREAD[0] header(op=0, sender=)
+	THREAD[0] Inizio execute
+	THREAD[0] Fine execute (esito=-1)
+	THREAD[0] Esito negativo, non rimetto in coda
+*******DISCONNECT [topolino]**********
+	THREAD[0] Aspetto richiesta dalla coda
+Accept FD = 14!
+Richiesta 14!
+	THREAD[4] coda = 14
+	THREAD[4] Servo Client [14]
+	THREAD[4] header(op=1, sender=paperino)
+	THREAD[4] Inizio execute
+			SENDER[paperino] OP[1]
+			INIZIO OP CONNECT SENDER[paperino]
+*******CONNECT [paperino]**********
+			ESITO CONNECT = 0
+			FINE OP CONNECT SENDER[paperino]
+			END SENDER[paperino] OP[1]
+	THREAD[4] Fine execute (esito=0)
+	THREAD[4] Esito positivo, rimetto in coda
+	THREAD[4] Aspetto richiesta dalla coda
+Richiesta 14!
+	THREAD[3] coda = 14
+	THREAD[3] Servo Client [14]
+	THREAD[3] header(op=2, sender=paperino)
+	THREAD[3] Inizio execute
+			SENDER[paperino] OP[2]
+			INIZIO OP POSTTXT SENDER[paperino]
+			LEN = 17
+			FD UTENTE[minni]
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+			FD UTENTE[minni] = 12
+			FINE OP POSTTXT SENDER[paperino]
+			END SENDER[paperino] OP[2]
+	THREAD[3] Fine execute (esito=0)
+	THREAD[3] Esito positivo, rimetto in coda
+	THREAD[3] Aspetto richiesta dalla coda
+Richiesta 14!
+	THREAD[7] coda = 14
+	THREAD[7] Servo Client [14]
+	THREAD[7] header(op=2, sender=paperino)
+	THREAD[7] Inizio execute
+			SENDER[paperino] OP[2]
+			INIZIO OP POSTTXT SENDER[paperino]
+			LEN = 13
+			FD UTENTE[minni]
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+			FD UTENTE[minni] = 12
+			FINE OP POSTTXT SENDER[paperino]
+			END SENDER[paperino] OP[2]
+	THREAD[7] Fine execute (esito=0)
+	THREAD[7] Esito positivo, rimetto in coda
+	THREAD[7] Aspetto richiesta dalla coda
+Richiesta 14!
+	THREAD[6] coda = 14
+	THREAD[6] Servo Client [14]
+	THREAD[6] header(op=0, sender=)
+	THREAD[6] Inizio execute
+	THREAD[6] Fine execute (esito=-1)
+	THREAD[6] Esito negativo, non rimetto in coda
+*******DISCONNECT [paperino]**********
+	THREAD[6] Aspetto richiesta dalla coda
+Accept FD = 15!
+Richiesta 15!
+	THREAD[5] coda = 15
+	THREAD[5] Servo Client [15]
+	THREAD[5] header(op=1, sender=qui)
+	THREAD[5] Inizio execute
+			SENDER[qui] OP[1]
+			INIZIO OP CONNECT SENDER[qui]
+*******CONNECT [qui]**********
+			ESITO CONNECT = 0
+			FINE OP CONNECT SENDER[qui]
+			END SENDER[qui] OP[1]
+	THREAD[5] Fine execute (esito=0)
+	THREAD[5] Esito positivo, rimetto in coda
+	THREAD[5] Aspetto richiesta dalla coda
+Richiesta 15!
+	THREAD[1] coda = 15
+	THREAD[1] Servo Client [15]
+	THREAD[1] header(op=3, sender=qui)
+	THREAD[1] Inizio execute
+			SENDER[qui] OP[3]
+			INIZIO OP POSTTXTALL SENDER[qui]
+PUSH DATA = ciao a tutti
+PUSH DATA = ciao a tutti
+PUSH DATA = ciao a tutti
+PUSH DATA = ciao a tutti
+PUSH DATA = ciao a tutti
+PUSH DATA = ciao a tutti
+			PENDING = 6
+			SENT = 2
+			INVIO = 0
+MANDO RICHIESTA (op=21,from=qui,to=,len=13,buf=ciao a tutti)
+			INVIO = 1
+MANDO RICHIESTA (op=21,from=qui,to=,len=13,buf=ciao a tutti)

@@ -1,0 +1,910 @@
+==5114== Memcheck, a memory error detector
+==5114== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==5114== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==5114== Command: ./chatty -f DATA/chatty.conf1
+==5114== 
+--5114-- Valgrind options:
+--5114--    --track-origins=yes
+--5114--    -v
+--5114--    --leak-check=full
+--5114-- Contents of /proc/version:
+--5114--   Linux version 4.12.8-2-ARCH (builduser@foutrelis) (gcc version 7.2.0 (GCC) ) #1 SMP PREEMPT Fri Aug 18 14:08:02 UTC 2017
+--5114-- 
+--5114-- Arch and hwcaps: AMD64, LittleEndian, amd64-cx16-lzcnt-rdtscp-sse3-avx-avx2-bmi
+--5114-- Page sizes: currently 4096, max supported 4096
+--5114-- Valgrind library directory: /usr/lib/valgrind
+--5114-- Reading syms from /home/gaspare/Esami/SOL/LAB/kit_chatty/chatty
+--5114-- Reading syms from /usr/lib/ld-2.25.so
+--5114-- Reading syms from /usr/lib/valgrind/memcheck-amd64-linux
+--5114--    object doesn't have a symbol table
+--5114--    object doesn't have a dynamic symbol table
+--5114-- Scheduler: using generic scheduler lock implementation.
+--5114-- Reading suppressions file: /usr/lib/valgrind/default.supp
+==5114== embedded gdbserver: reading from /tmp/vgdb-pipe-from-vgdb-to-5114-by-gaspare-on-???
+==5114== embedded gdbserver: writing to   /tmp/vgdb-pipe-to-vgdb-from-5114-by-gaspare-on-???
+==5114== embedded gdbserver: shared mem   /tmp/vgdb-pipe-shared-mem-vgdb-5114-by-gaspare-on-???
+==5114== 
+==5114== TO CONTROL THIS PROCESS USING vgdb (which you probably
+==5114== don't want to do, unless you know exactly what you're doing,
+==5114== or are doing some strange experiment):
+==5114==   /usr/lib/valgrind/../../bin/vgdb --pid=5114 ...command...
+==5114== 
+==5114== TO DEBUG THIS PROCESS USING GDB: start GDB like this
+==5114==   /path/to/gdb ./chatty
+==5114== and then give GDB the following command
+==5114==   target remote | /usr/lib/valgrind/../../bin/vgdb --pid=5114
+==5114== --pid is optional if only one valgrind process is running
+==5114== 
+--5114-- REDIR: 0x401b010 (ld-linux-x86-64.so.2:strlen) redirected to 0x58061fd1 (???)
+--5114-- REDIR: 0x40198c0 (ld-linux-x86-64.so.2:index) redirected to 0x58061feb (???)
+--5114-- Reading syms from /usr/lib/valgrind/vgpreload_core-amd64-linux.so
+--5114--    object doesn't have a symbol table
+--5114-- Reading syms from /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so
+--5114--    object doesn't have a symbol table
+==5114== WARNING: new redirection conflicts with existing -- ignoring it
+--5114--     old: 0x0401b010 (strlen              ) R-> (0000.0) 0x58061fd1 ???
+--5114--     new: 0x0401b010 (strlen              ) R-> (2007.0) 0x04c2f200 strlen
+--5114-- REDIR: 0x4019ae0 (ld-linux-x86-64.so.2:strcmp) redirected to 0x4c30350 (strcmp)
+--5114-- REDIR: 0x401bb30 (ld-linux-x86-64.so.2:mempcpy) redirected to 0x4c33960 (mempcpy)
+--5114-- Reading syms from /usr/lib/libpthread-2.25.so
+--5114-- Reading syms from /usr/lib/libc-2.25.so
+--5114-- REDIR: 0x50dabe0 (libc.so.6:strspn) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50da870 (libc.so.6:strpbrk) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50dec50 (libc.so.6:strncasecmp) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50d83f0 (libc.so.6:strcspn) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50dc960 (libc.so.6:strcasecmp) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50dbfd0 (libc.so.6:memmove) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50dc690 (libc.so.6:mempcpy) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50d6bf0 (libc.so.6:index) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50dc480 (libc.so.6:memset) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50d6e40 (libc.so.6:strcmp) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50e1350 (libc.so.6:memcpy@@GLIBC_2.14) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50da580 (libc.so.6:rindex) redirected to 0x4c2eb80 (rindex)
+--5114-- REDIR: 0x50d8ca0 (libc.so.6:strncmp) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x517f6d0 (libc.so.6:__strncmp_sse42) redirected to 0x4c2f9c0 (__strncmp_sse42)
+--5114-- REDIR: 0x50d88a0 (libc.so.6:strlen) redirected to 0x4c2f140 (strlen)
+--5114-- REDIR: 0x50d3630 (libc.so.6:malloc) redirected to 0x4c2be10 (malloc)
+--5114-- REDIR: 0x50dc0c0 (libc.so.6:__GI_mempcpy) redirected to 0x4c33690 (__GI_mempcpy)
+--5114-- REDIR: 0x50db170 (libc.so.6:__GI_strstr) redirected to 0x4c33be0 (__strstr_sse2)
+--5114-- REDIR: 0x50db830 (libc.so.6:memchr) redirected to 0x4c303f0 (memchr)
+--5114-- REDIR: 0x50dc0e0 (libc.so.6:memcpy@GLIBC_2.2.5) redirected to 0x4c304d0 (memcpy@GLIBC_2.2.5)
+--5114-- REDIR: 0x50e27a0 (libc.so.6:rawmemchr) redirected to 0x4c334c0 (rawmemchr)
+--5114-- REDIR: 0x5187bf0 (libc.so.6:__strcmp_ssse3) redirected to 0x4c30210 (strcmp)
+--5114-- REDIR: 0x5187ae0 (libc.so.6:__memset_avx2_unaligned_erms) redirected to 0x4c32a40 (memset)
+--5114-- REDIR: 0x50da540 (libc.so.6:strncpy) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x519af90 (libc.so.6:__strncpy_ssse3) redirected to 0x4c2f400 (strncpy)
+Leggo configurazioni...
+--5114-- REDIR: 0x50d3a20 (libc.so.6:free) redirected to 0x4c2d100 (free)
+--5114-- REDIR: 0x50e29b0 (libc.so.6:strchrnul) redirected to 0x4c33490 (strchrnul)
+Configurazioni lette:
+statFileName 	-> [/tmp/chatty_stats.txt]
+dirName 	-> [/tmp/chatty]
+unixPath 	-> [/tmp/chatty_socket]
+maxHistMsgs 	-> [16]
+maxFileSize 	-> [1024]
+maxMsgSize 	-> [512]
+threadsInPool 	-> [8]
+maxConnections 	-> [32]
+--5114-- REDIR: 0x50d3e40 (libc.so.6:calloc) redirected to 0x4c2dea0 (calloc)
+Registro segnali!
+Creo coda richieste...
+Creo user manager...
+Creo socket!
+Bind socket!
+Listen socket!
+Creo ThreadPool!
+Creo Thread 0!
+Creo Thread 1!
+Creo Thread 2!
+Creo Thread 3!
+Creo Thread 4!
+Creo Thread 5!
+Creo Thread 6!
+Creo Thread 7!
+	THREAD[6] Start
+	THREAD[6] Aspetto richiesta dalla coda
+	THREAD[1] Start
+	THREAD[1] Aspetto richiesta dalla coda
+	THREAD[7] Start
+	THREAD[7] Aspetto richiesta dalla coda
+	THREAD[3] Start
+	THREAD[3] Aspetto richiesta dalla coda
+	THREAD[0] Start
+	THREAD[0] Aspetto richiesta dalla coda
+	THREAD[4] Start
+	THREAD[4] Aspetto richiesta dalla coda
+	THREAD[2] Start
+	THREAD[2] Aspetto richiesta dalla coda
+	THREAD[5] Start
+	THREAD[5] Aspetto richiesta dalla coda
+Accept FD = 4!
+Accept FD = 5!
+Richiesta 4!
+	THREAD[6] coda = 4
+Accept FD = 6!
+Richiesta 5!
+	THREAD[6] Servo Client [4]
+	THREAD[6] header(op=0, sender=pippo)
+	THREAD[6] Inizio execute
+			SENDER[pippo] OP[0]
+	THREAD[1] coda = 5
+*******CONNECT [pippo]**********
+Accept FD = 7!
+Richiesta 6!
+Accept FD = 8!
+Richiesta 7!
+	THREAD[1] Servo Client [5]
+	THREAD[1] header(op=0, sender=pluto)
+	THREAD[1] Inizio execute
+			SENDER[pluto] OP[0]
+			END SENDER[pippo] OP[0]
+	THREAD[6] Fine execute (esito=0)
+	THREAD[6] Esito positivo, rimetto in coda
+	THREAD[6] Aspetto richiesta dalla coda
+	THREAD[6] coda = 7
+	THREAD[6] Servo Client [7]
+	THREAD[6] header(op=0, sender=topolino)
+	THREAD[6] Inizio execute
+			SENDER[topolino] OP[0]
+Accept FD = 9!
+Richiesta 8!
+*******CONNECT [topolino]**********
+*******CONNECT [pluto]**********
+	THREAD[7] coda = 6
+	THREAD[7] Servo Client [6]
+	THREAD[7] header(op=0, sender=minni)
+	THREAD[7] Inizio execute
+			SENDER[minni] OP[0]
+*******CONNECT [minni]**********
+			END SENDER[pluto] OP[0]
+	THREAD[1] Fine execute (esito=0)
+	THREAD[1] Esito positivo, rimetto in coda
+	THREAD[1] Aspetto richiesta dalla coda
+			END SENDER[minni] OP[0]
+	THREAD[7] Fine execute (esito=0)
+	THREAD[7] Esito positivo, rimetto in coda
+	THREAD[7] Aspetto richiesta dalla coda
+			END SENDER[topolino] OP[0]
+	THREAD[6] Fine execute (esito=0)
+	THREAD[6] Esito positivo, rimetto in coda
+	THREAD[6] Aspetto richiesta dalla coda
+	THREAD[1] coda = 8
+Accept FD = 10!
+Richiesta 4!
+	THREAD[1] Servo Client [8]
+	THREAD[1] header(op=0, sender=paperino)
+	THREAD[1] Inizio execute
+			SENDER[paperino] OP[0]
+*******CONNECT [paperino]**********
+			END SENDER[paperino] OP[0]
+	THREAD[1] Fine execute (esito=0)
+	THREAD[1] Esito positivo, rimetto in coda
+	THREAD[1] Aspetto richiesta dalla coda
+Richiesta 5!
+Richiesta 6!
+Richiesta 7!
+Richiesta 9!
+Accept FD = 11!
+Richiesta 8!
+Richiesta 10!
+Richiesta 11!
+	THREAD[6] coda = 4
+	THREAD[3] coda = 6
+	THREAD[2] coda = 8
+	THREAD[1] coda = 7
+	THREAD[4] coda = 5
+	THREAD[3] Servo Client [6]
+	THREAD[3] header(op=0, sender=)
+	THREAD[3] Inizio execute
+	THREAD[5] coda = 11
+	THREAD[1] Servo Client [7]
+	THREAD[1] header(op=0, sender=)
+	THREAD[1] Inizio execute
+	THREAD[3] Fine execute (esito=-1)
+	THREAD[3] Esito negativo, non rimetto in coda
+*******DISCONNECT [minni]**********
+	THREAD[3] Aspetto richiesta dalla coda
+	THREAD[1] Fine execute (esito=-1)
+	THREAD[1] Esito negativo, non rimetto in coda
+*******DISCONNECT [topolino]**********
+	THREAD[1] Aspetto richiesta dalla coda
+	THREAD[5] Servo Client [11]
+	THREAD[5] header(op=0, sender=qua)
+	THREAD[5] Inizio execute
+			SENDER[qua] OP[0]
+	THREAD[7] coda = 10
+	THREAD[6] Servo Client [4]
+	THREAD[6] header(op=0, sender=)
+	THREAD[6] Inizio execute
+	THREAD[4] Servo Client [5]
+	THREAD[4] header(op=0, sender=)
+	THREAD[4] Inizio execute
+	THREAD[7] Servo Client [10]
+	THREAD[7] header(op=0, sender=qui)
+	THREAD[7] Inizio execute
+			SENDER[qui] OP[0]
+	THREAD[0] coda = 9
+	THREAD[0] Servo Client [9]
+	THREAD[0] header(op=0, sender=quo)
+	THREAD[0] Inizio execute
+			SENDER[quo] OP[0]
+*******CONNECT [quo]**********
+*******CONNECT [qui]**********
+	THREAD[2] Servo Client [8]
+	THREAD[2] header(op=0, sender=)
+	THREAD[2] Inizio execute
+			END SENDER[quo] OP[0]
+	THREAD[0] Fine execute (esito=0)
+	THREAD[0] Esito positivo, rimetto in coda
+	THREAD[0] Aspetto richiesta dalla coda
+	THREAD[2] Fine execute (esito=-1)
+	THREAD[2] Esito negativo, non rimetto in coda
+Richiesta 9!
+*******CONNECT [qua]**********
+	THREAD[6] Fine execute (esito=-1)
+	THREAD[6] Esito negativo, non rimetto in coda
+*******DISCONNECT [pippo]**********
+*******DISCONNECT [paperino]**********
+	THREAD[2] Aspetto richiesta dalla coda
+	THREAD[6] Aspetto richiesta dalla coda
+	THREAD[4] Fine execute (esito=-1)
+			END SENDER[qui] OP[0]
+	THREAD[4] Esito negativo, non rimetto in coda
+*******DISCONNECT [pluto]**********
+	THREAD[4] Aspetto richiesta dalla coda
+	THREAD[7] Fine execute (esito=0)
+	THREAD[7] Esito positivo, rimetto in coda
+	THREAD[7] Aspetto richiesta dalla coda
+			END SENDER[qua] OP[0]
+	THREAD[5] Fine execute (esito=0)
+	THREAD[5] Esito positivo, rimetto in coda
+	THREAD[5] Aspetto richiesta dalla coda
+Richiesta 10!
+	THREAD[3] coda = 9
+	THREAD[3] Servo Client [9]
+	THREAD[3] header(op=0, sender=)
+	THREAD[3] Inizio execute
+Richiesta 11!
+	THREAD[6] coda = 10
+	THREAD[6] Servo Client [10]
+	THREAD[6] header(op=0, sender=)
+	THREAD[6] Inizio execute
+	THREAD[6] Fine execute (esito=-1)
+	THREAD[6] Esito negativo, non rimetto in coda
+*******DISCONNECT [qui]**********
+	THREAD[6] Aspetto richiesta dalla coda
+	THREAD[6] coda = 11
+	THREAD[6] Servo Client [11]
+	THREAD[6] header(op=0, sender=)
+	THREAD[6] Inizio execute
+	THREAD[6] Fine execute (esito=-1)
+	THREAD[6] Esito negativo, non rimetto in coda
+*******DISCONNECT [qua]**********
+	THREAD[6] Aspetto richiesta dalla coda
+	THREAD[3] Fine execute (esito=-1)
+	THREAD[3] Esito negativo, non rimetto in coda
+*******DISCONNECT [quo]**********
+	THREAD[3] Aspetto richiesta dalla coda
+Accept FD = 12!
+Accept FD = 13!
+Richiesta 12!
+	THREAD[0] coda = -1
+	THREAD[0] Aspetto richiesta dalla coda
+	THREAD[1] coda = -1
+	THREAD[1] Aspetto richiesta dalla coda
+	THREAD[1] coda = 12
+	THREAD[1] Servo Client [12]
+	THREAD[1] header(op=1, sender=minni)
+	THREAD[1] Inizio execute
+			SENDER[minni] OP[1]
+			INIZIO OP CONNECT SENDER[minni]
+*******CONNECT [minni]**********
+			ESITO CONNECT = 0
+			FINE OP CONNECT SENDER[minni]
+			END SENDER[minni] OP[1]
+	THREAD[1] Fine execute (esito=0)
+	THREAD[1] Esito positivo, rimetto in coda
+	THREAD[1] Aspetto richiesta dalla coda
+	THREAD[2] coda = -1
+	THREAD[2] Aspetto richiesta dalla coda
+Accept FD = 14!
+Richiesta 13!
+	THREAD[3] coda = 13
+Richiesta 12!
+	THREAD[3] Servo Client [13]
+	THREAD[3] header(op=1, sender=topolino)
+	THREAD[3] Inizio execute
+			SENDER[topolino] OP[1]
+			INIZIO OP CONNECT SENDER[topolino]
+*******CONNECT [topolino]**********
+			ESITO CONNECT = 0
+Richiesta 14!
+			FINE OP CONNECT SENDER[topolino]
+			END SENDER[topolino] OP[1]
+	THREAD[3] Fine execute (esito=0)
+	THREAD[3] Esito positivo, rimetto in coda
+	THREAD[3] Aspetto richiesta dalla coda
+	THREAD[6] coda = 12
+	THREAD[6] Servo Client [12]
+	THREAD[6] header(op=3, sender=minni)
+	THREAD[6] Inizio execute
+			SENDER[minni] OP[3]
+			INIZIO OP POSTTXTALL SENDER[minni]
+PUSH DATA = Ciao a tutti, io ricevo e basta
+PUSH DATA = Ciao a tutti, io ricevo e basta
+PUSH DATA = Ciao a tutti, io ricevo e basta
+PUSH DATA = Ciao a tutti, io ricevo e basta
+PUSH DATA = Ciao a tutti, io ricevo e basta
+PUSH DATA = Ciao a tutti, io ricevo e basta
+			PENDING = 6
+			SENT = 2
+			INVIO = 0
+MANDO RICHIESTA (op=21,from=minni,to=,len=32,buf=Ciao a tutti, io ricevo e basta)
+	THREAD[5] coda = -1
+	THREAD[5] Aspetto richiesta dalla coda
+	THREAD[3] coda = 14
+	THREAD[3] Servo Client [14]
+	THREAD[3] header(op=1, sender=qua)
+	THREAD[3] Inizio execute
+			SENDER[qua] OP[1]
+Richiesta 13!
+			INIZIO OP CONNECT SENDER[qua]
+*******CONNECT [qua]**********
+			ESITO CONNECT = 0
+			FINE OP CONNECT SENDER[qua]
+			END SENDER[qua] OP[1]
+	THREAD[3] Fine execute (esito=0)
+	THREAD[3] Esito positivo, rimetto in coda
+	THREAD[3] Aspetto richiesta dalla coda
+			INVIO = 1
+MANDO RICHIESTA (op=21,from=minni,to=,len=32,buf=Ciao a tutti, io ricevo e basta)
+	THREAD[7] coda = 13
+Richiesta 14!
+			FINE OP POSTTXTALL SENDER[minni]
+			END SENDER[minni] OP[3]
+	THREAD[6] Fine execute (esito=0)
+	THREAD[6] Esito positivo, rimetto in coda
+	THREAD[6] Aspetto richiesta dalla coda
+	THREAD[6] coda = 14
+	THREAD[6] Servo Client [14]
+	THREAD[6] header(op=3, sender=qua)
+	THR--5114-- REDIR: 0x50d69f0 (libc.so.6:strcat) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50e7d90 (libc.so.6:__strcat_ssse3) redirected to 0x4c2ede0 (strcat)
+--5114-- REDIR: 0x50d8c60 (libc.so.6:strncat) redirected to 0x4a266f0 (_vgnU_ifunc_wrapper)
+--5114-- REDIR: 0x50e99b0 (libc.so.6:__strncat_ssse3) redirected to 0x4c2efe0 (strncat)
+EAD[6] Inizio execute
+			SENDER[qua] OP[3]
+	THREAD[0] coda = -1
+			INIZIO OP POSTTXTALL SENDER[qua]
+PUSH DATA = Ciao a tutti, io ricevo e basta
+PUSH DATA = Ciao a tutti, io ricevo e basta
+PUSH DATA = Ciao a tutti, io ricevo e basta
+PUSH DATA = Ciao a tutti, io ricevo e basta
+PUSH DATA = Ciao a tutti, io ricevo e basta
+			PENDING = 5
+			SENT = 3
+			INVIO = 0
+MANDO RICHIESTA (op=21,from=qua,to=,len=32,buf=Ciao a tutti, io ricevo e basta)
+	THREAD[7] Servo Client [13]
+	THREAD[7] header(op=2, sender=topolino)
+	THREAD[7] Inizio execute
+			SENDER[topolino] OP[2]
+			INVIO = 1
+MANDO RICHIESTA (op=21,from=qua,to=,len=32,buf=Ciao a tutti, io ricevo e basta)
+			INIZIO OP POSTTXT SENDER[topolino]
+			LEN = 28
+			FD UTENTE[minni]
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+			FD UTENTE[minni] = 12
+			INVIO = 2
+MANDO RICHIESTA (op=21,from=qua,to=,len=32,buf=Ciao a tutti, io ricevo e basta)
+			FINE OP POSTTXT SENDER[topolino]
+			END SENDER[topolino] OP[2]
+	THREAD[7] Fine execute (esito=0)
+	THREAD[7] Esito positivo, rimetto in coda
+	THREAD[7] Aspetto richiesta dalla coda
+			FINE OP POSTTXTALL SENDER[qua]
+			END SENDER[qua] OP[3]
+	THREAD[6] Fine execute (esito=0)
+	THREAD[6] Esito positivo, rimetto in coda
+	THREAD[6] Aspetto richiesta dalla coda
+	THREAD[0] Aspetto richiesta dalla coda
+Richiesta 13!
+	THREAD[1] coda = 13
+	THREAD[1] Servo Client [13]
+	THREAD[1] header(op=2, sender=topolino)
+	THREAD[1] Inizio execute
+			SENDER[topolino] OP[2]
+			INIZIO OP POSTTXT SENDER[topolino]
+			LEN = 18
+			FD UTENTE[pluto]
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+			FD UTENTE[pluto] = -1
+				post_msg(pluto) trovato, msg = bbbbbbbbbbbbbbbbb
+PUSH DATA = bbbbbbbbbbbbbbbbb
+			FINE OP POSTTXT SENDER[topolino]
+			END SENDER[topolino] OP[2]
+	THREAD[1] Fine execute (esito=0)
+	THREAD[1] Esito positivo, rimetto in coda
+	THREAD[1] Aspetto richiesta dalla coda
+Richiesta 13!
+	THREAD[2] coda = 13
+	THREAD[2] Servo Client [13]
+	THREAD[2] header(op=3, sender=topolino)
+	THREAD[2] Inizio execute
+			SENDER[topolino] OP[3]
+			INIZIO OP POSTTXTALL SENDER[topolino]
+PUSH DATA = ccccccccccccccccc
+PUSH DATA = ccccccccccccccccc
+PUSH DATA = ccccccccccccccccc
+PUSH DATA = ccccccccccccccccc
+PUSH DATA = ccccccccccccccccc
+			PENDING = 5
+			SENT = 3
+			INVIO = 0
+MANDO RICHIESTA (op=21,from=topolino,to=,len=18,buf=ccccccccccccccccc)
+			INVIO = 1
+MANDO RICHIESTA (op=21,from=topolino,to=,len=18,buf=ccccccccccccccccc)
+			INVIO = 2
+MANDO RICHIESTA (op=21,from=topolino,to=,len=18,buf=ccccccccccccccccc)
+			FINE OP POSTTXTALL SENDER[topolino]
+			END SENDER[topolino] OP[3]
+	THREAD[2] Fine execute (esito=0)
+	THREAD[2] Esito positivo, rimetto in coda
+	THREAD[2] Aspetto richiesta dalla coda
+Richiesta 13!
+	THREAD[4] coda = 13
+	THREAD[4] Servo Client [13]
+	THREAD[4] header(op=2, sender=topolino)
+	THREAD[4] Inizio execute
+			SENDER[topolino] OP[2]
+			INIZIO OP POSTTXT SENDER[topolino]
+			LEN = 22
+			FD UTENTE[paperino]
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+			FD UTENTE[paperino] = -1
+				post_msg(paperino) trovato, msg = ddddddddddddddddddddd
+PUSH DATA = ddddddddddddddddddddd
+			FINE OP POSTTXT SENDER[topolino]
+			END SENDER[topolino] OP[2]
+	THREAD[4] Fine execute (esito=0)
+	THREAD[4] Esito positivo, rimetto in coda
+	THREAD[4] Aspetto richiesta dalla coda
+Richiesta 13!
+	THREAD[5] coda = 13
+	THREAD[5] Servo Client [13]
+	THREAD[5] header(op=4, sender=topolino)
+	THREAD[5] Inizio execute
+			SENDER[topolino] OP[4]
+			INIZIO OP POSTFILE SENDER[topolino]
+			RECEIVED NAME[client] SIZE[7]
+			RECEIVED FILESIZE[39544]
+SLASSSSSHHHH P[client] L[7]
+			APERTO /tmp/chatty/client
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+		FINE OP POSTFILE SENDER[topolino]
+			END SENDER[topolino] OP[4]
+	THREAD[5] Fine execute (esito=0)
+	THREAD[5] Esito positivo, rimetto in coda
+	THREAD[5] Aspetto richiesta dalla coda
+Richiesta 12!
+Richiesta 13!
+	THREAD[7] coda = 12
+	THREAD[7] Servo Client [12]
+	THREAD[7] header(op=5, sender=minni)
+	THREAD[7] Inizio execute
+			SENDER[minni] OP[5]
+			INIZIO OP GETFILE SENDER[minni]
+	THREAD[3] coda = 13
+			FINE OP GETFILE SENDER[minni]
+			END SENDER[minni] OP[5]
+	THREAD[7] Fine execute (esito=0)
+	THREAD[7] Esito positivo, rimetto in coda
+	THREAD[7] Aspetto richiesta dalla coda
+	THREAD[3] Servo Client [13]
+	THREAD[3] header(op=4, sender=topolino)
+	THREAD[3] Inizio execute
+			SENDER[topolino] OP[4]
+			INIZIO OP POSTFILE SENDER[topolino]
+			RECEIVED NAME[chatty] SIZE[7]
+			RECEIVED FILESIZE[76640]
+SLASSSSSHHHH P[chatty] L[7]
+			APERTO /tmp/chatty/chatty
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+		FINE OP POSTFILE SENDER[topolino]
+			END SENDER[topolino] OP[4]
+	THREAD[3] Fine execute (esito=0)
+	THREAD[3] Esito positivo, rimetto in coda
+	THREAD[3] Aspetto richiesta dalla coda
+Richiesta 13!
+Richiesta 14!
+	THREAD[0] coda = 13
+	THREAD[0] Servo Client [13]
+	THREAD[0] header(op=0, sender=)
+	THREAD[0] Inizio execute
+	THREAD[0] Fine execute (esito=-1)
+	THREAD[0] Esito negativo, non rimetto in coda
+*******DISCONNECT [topolino]**********
+	THREAD[0] Aspetto richiesta dalla coda
+	THREAD[6] coda = 14
+	THREAD[6] Servo Client [14]
+	THREAD[6] header(op=5, sender=qua)
+	THREAD[6] Inizio execute
+			SENDER[qua] OP[5]
+			INIZIO OP GETFILE SENDER[qua]
+Accept FD = 15!
+			FINE OP GETFILE SENDER[qua]
+			END SENDER[qua] OP[5]
+	THREAD[6] Fine execute (esito=0)
+	THREAD[6] Esito positivo, rimetto in coda
+	THREAD[6] Aspetto richiesta dalla coda
+Richiesta 15!
+	THREAD[1] coda = 15
+	THREAD[1] Servo Client [15]
+	THREAD[1] header(op=1, sender=paperino)
+	THREAD[1] Inizio execute
+			SENDER[paperino] OP[1]
+			INIZIO OP CONNECT SENDER[paperino]
+*******CONNECT [paperino]**********
+			ESITO CONNECT = 0
+			FINE OP CONNECT SENDER[paperino]
+			END SENDER[paperino] OP[1]
+	THREAD[1] Fine execute (esito=0)
+	THREAD[1] Esito positivo, rimetto in coda
+	THREAD[1] Aspetto richiesta dalla coda
+Richiesta 15!
+	THREAD[2] coda = 15
+	THREAD[2] Servo Client [15]
+	THREAD[2] header(op=6, sender=paperino)
+	THREAD[2] Inizio execute
+			SENDER[paperino] OP[6]
+			INIZIO OP GETPREVMSGS SENDER[paperino]
+					OK paperino
+					OK2 paperino
+			GETPREVSMGS len=4
+POP DATA = Ciao a tutti, io ricevo e basta
+---------------------------------INVIO[21][Ciao a tutti, io ricevo e basta]
+POP DATA = Ciao a tutti, io ricevo e basta
+---------------------------------INVIO[21][Ciao a tutti, io ricevo e basta]
+POP DATA = ccccccccccccccccc
+---------------------------------INVIO[21][ccccccccccccccccc]
+POP DATA = ddddddddddddddddddddd
+---------------------------------INVIO[21][ddddddddddddddddddddd]
+			FINE OP GETPREVMSGS SENDER[paperino]
+			END SENDER[paperino] OP[6]
+	THREAD[2] Fine execute (esito=0)
+	THREAD[2] Esito positivo, rimetto in coda
+	THREAD[2] Aspetto richiesta dalla coda
+Richiesta 15!
+	THREAD[4] coda = 15
+	THREAD[4] Servo Client [15]
+	THREAD[4] header(op=2, sender=paperino)
+	THREAD[4] Inizio execute
+			SENDER[paperino] OP[2]
+			INIZIO OP POSTTXT SENDER[paperino]
+			LEN = 28
+			FD UTENTE[minni]
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+			FD UTENTE[minni] = 12
+			FINE OP POSTTXT SENDER[paperino]
+			END SENDER[paperino] OP[2]
+	THREAD[4] Fine execute (esito=0)
+	THREAD[4] Esito positivo, rimetto in coda
+	THREAD[4] Aspetto richiesta dalla coda
+Richiesta 15!
+	THREAD[5] coda = 15
+	THREAD[5] Servo Client [15]
+	THREAD[5] header(op=2, sender=paperino)
+	THREAD[5] Inizio execute
+			SENDER[paperino] OP[2]
+			INIZIO OP POSTTXT SENDER[paperino]
+			LEN = 18
+			FD UTENTE[pluto]
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+			FD UTENTE[pluto] = -1
+				post_msg(pluto) trovato, msg = bbbbbbbbbbbbbbbbb
+PUSH DATA = bbbbbbbbbbbbbbbbb
+			FINE OP POSTTXT SENDER[paperino]
+			END SENDER[paperino] OP[2]
+	THREAD[5] Fine execute (esito=0)
+	THREAD[5] Esito positivo, rimetto in coda
+	THREAD[5] Aspetto richiesta dalla coda
+Richiesta 15!
+	THREAD[7] coda = 15
+	THREAD[7] Servo Client [15]
+	THREAD[7] header(op=3, sender=paperino)
+	THREAD[7] Inizio execute
+			SENDER[paperino] OP[3]
+			INIZIO OP POSTTXTALL SENDER[paperino]
+PUSH DATA = ccccccccccccccccc
+PUSH DATA = ccccccccccccccccc
+PUSH DATA = ccccccccccccccccc
+PUSH DATA = ccccccccccccccccc
+PUSH DATA = ccccccccccccccccc
+			PENDING = 5
+			SENT = 3
+			INVIO = 0
+MANDO RICHIESTA (op=21,from=paperino,to=,len=18,buf=ccccccccccccccccc)
+			INVIO = 1
+MANDO RICHIESTA (op=21,from=paperino,to=,len=18,buf=ccccccccccccccccc)
+			INVIO = 2
+MANDO RICHIESTA (op=21,from=paperino,to=,len=18,buf=ccccccccccccccccc)
+			FINE OP POSTTXTALL SENDER[paperino]
+			END SENDER[paperino] OP[3]
+	THREAD[7] Fine execute (esito=0)
+	THREAD[7] Esito positivo, rimetto in coda
+	THREAD[7] Aspetto richiesta dalla coda
+Richiesta 15!
+	THREAD[3] coda = 15
+	THREAD[3] Servo Client [15]
+	THREAD[3] header(op=2, sender=paperino)
+	THREAD[3] Inizio execute
+			SENDER[paperino] OP[2]
+			INIZIO OP POSTTXT SENDER[paperino]
+			LEN = 22
+			FD UTENTE[topolino]
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+			FD UTENTE[topolino] = -1
+				post_msg(topolino) trovato, msg = ddddddddddddddddddddd
+PUSH DATA = ddddddddddddddddddddd
+			FINE OP POSTTXT SENDER[paperino]
+			END SENDER[paperino] OP[2]
+	THREAD[3] Fine execute (esito=0)
+	THREAD[3] Esito positivo, rimetto in coda
+	THREAD[3] Aspetto richiesta dalla coda
+Richiesta 15!
+	THREAD[0] coda = 15
+	THREAD[0] Servo Client [15]
+	THREAD[0] header(op=4, sender=paperino)
+	THREAD[0] Inizio execute
+			SENDER[paperino] OP[4]
+			INIZIO OP POSTFILE SENDER[paperino]
+			RECEIVED NAME[./libchatty.a] SIZE[14]
+			RECEIVED FILESIZE[68818]
+SLASSSSSHHHH P[./libchatty.a] L[14]
+SLASSSSSHHHH [libchatty.a] L[12]
+			APERTO /tmp/chatty/libchatty.a
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+		FINE OP POSTFILE SENDER[paperino]
+			END SENDER[paperino] OP[4]
+	THREAD[0] Fine execute (esito=0)
+	THREAD[0] Esito positivo, rimetto in coda
+	THREAD[0] Aspetto richiesta dalla coda
+Richiesta 12!
+Richiesta 15!
+	THREAD[1] coda = 15
+	THREAD[6] coda = 12
+	THREAD[6] Servo Client [12]
+	THREAD[6] header(op=5, sender=minni)
+	THREAD[6] Inizio execute
+			SENDER[minni] OP[5]
+	THREAD[1] Servo Client [15]
+	THREAD[1] header(op=0, sender=)
+	THREAD[1] Inizio execute
+	THREAD[1] Fine execute (esito=-1)
+	THREAD[1] Esito negativo, non rimetto in coda
+*******DISCONNECT [paperino]**********
+	THREAD[1] Aspetto richiesta dalla coda
+			INIZIO OP GETFILE SENDER[minni]
+Accept FD = 16!
+Richiesta 16!
+			FINE OP GETFILE SENDER[minni]
+			END SENDER[minni] OP[5]
+	THREAD[6] Fine execute (esito=0)
+	THREAD[6] Esito positivo, rimetto in coda
+	THREAD[6] Aspetto richiesta dalla coda
+	THREAD[2] coda = -1
+	THREAD[2] Aspetto richiesta dalla coda
+	THREAD[6] coda = 16
+	THREAD[6] Servo Client [16]
+	THREAD[6] header(op=1, sender=pippo)
+	THREAD[6] Inizio execute
+			SENDER[pippo] OP[1]
+			INIZIO OP CONNECT SENDER[pippo]
+*******CONNECT [pippo]**********
+			ESITO CONNECT = 0
+			FINE OP CONNECT SENDER[pippo]
+			END SENDER[pippo] OP[1]
+	THREAD[6] Fine execute (esito=0)
+	THREAD[6] Esito positivo, rimetto in coda
+	THREAD[6] Aspetto richiesta dalla coda
+Richiesta 16!
+	THREAD[4] coda = 16
+	THREAD[4] Servo Client [16]
+	THREAD[4] header(op=6, sender=pippo)
+	THREAD[4] Inizio execute
+			SENDER[pippo] OP[6]
+			INIZIO OP GETPREVMSGS SENDER[pippo]
+					OK pippo
+					OK2 pippo
+			GETPREVSMGS len=4
+POP DATA = Ciao a tutti, io ricevo e basta
+---------------------------------INVIO[21][Ciao a tutti, io ricevo e basta]
+POP DATA = Ciao a tutti, io ricevo e basta
+---------------------------------INVIO[21][Ciao a tutti, io ricevo e basta]
+POP DATA = ccccccccccccccccc
+---------------------------------INVIO[21][ccccccccccccccccc]
+POP DATA = ccccccccccccccccc
+---------------------------------INVIO[21][ccccccccccccccccc]
+			FINE OP GETPREVMSGS SENDER[pippo]
+			END SENDER[pippo] OP[6]
+	THREAD[4] Fine execute (esito=0)
+	THREAD[4] Esito positivo, rimetto in coda
+	THREAD[4] Aspetto richiesta dalla coda
+Richiesta 16!
+	THREAD[5] coda = 16
+	THREAD[5] Servo Client [16]
+	THREAD[5] header(op=4, sender=pippo)
+	THREAD[5] Inizio execute
+			SENDER[pippo] OP[4]
+			INIZIO OP POSTFILE SENDER[pippo]
+			RECEIVED NAME[listener.o] SIZE[11]
+			RECEIVED FILESIZE[2704]
+SLASSSSSHHHH P[listener.o] L[11]
+			APERTO /tmp/chatty/listener.o
+					CONNECT 1
+					CONNECT 2
+					CONNECT 3
+		FINE OP POSTFILE SENDER[pippo]
+			END SENDER[pippo] OP[4]
+	THREAD[5] Fine execute (esito=0)
+	THREAD[5] Esito positivo, rimetto in coda
+	THREAD[5] Aspetto richiesta dalla coda
+Richiesta 12!
+	THREAD[7] coda = 12
+PRINT STATS
+	THREAD[7] Servo Client [12]
+	THREAD[7] header(op=5, sender=minni)
+	THREAD[7] Inizio execute
+			SENDER[minni] OP[5]
+Richiesta 16!
+	THREAD[3] coda = 16
+	THREAD[3] Servo Client [16]
+	THREAD[3] header(op=0, sender=)
+	THREAD[3] Inizio execute
+	THREAD[3] Fine execute (esito=-1)
+	THREAD[3] Esito negativo, non rimetto in coda
+*******DISCONNECT [pippo]**********
+	THREAD[3] Aspetto richiesta dalla coda
+			INIZIO OP GETFILE SENDER[minni]
+			FINE OP GETFILE SENDER[minni]
+			END SENDER[minni] OP[5]
+	THREAD[7] Fine execute (esito=0)
+	THREAD[7] Esito positivo, rimetto in coda
+	THREAD[7] Aspetto richiesta dalla coda
+Richiesta 12!
+Richiesta 14!
+	THREAD[1] coda = 12
+	THREAD[2] coda = 14
+	THREAD[1] Servo Client [12]
+	THREAD[1] header(op=0, sender=)
+	THREAD[1] Inizio execute
+	THREAD[2] Servo Client [14]
+	THREAD[2] header(op=0, sender=)
+	THREAD[2] Inizio execute
+	THREAD[1] Fine execute (esito=-1)
+	THREAD[1] Esito negativo, non rimetto in coda
+*******DISCONNECT [minni]**********
+	THREAD[1] Aspetto richiesta dalla coda
+	THREAD[2] Fine execute (esito=-1)
+	THREAD[2] Esito negativo, non rimetto in coda
+*******DISCONNECT [qua]**********
+	THREAD[2] Aspetto richiesta dalla coda
+KILL
+	THREAD[4] coda = -1
+	THREAD[4] Stop
+	THREAD[0] coda = -1
+	THREAD[0] Stop
+	THREAD[2] coda = -1
+	THREAD[2] Stop
+Join thread 0
+	THREAD[6] coda = -1
+	THREAD[6] Stop
+	THREAD[1] coda = -1
+	THREAD[1] Stop
+	THREAD[5] coda = -1
+	THREAD[5] Stop
+	THREAD[7] coda = -1
+	THREAD[7] Stop
+	THREAD[3] coda = -1
+	THREAD[3] Stop
+Join thread 1
+Join thread 2
+Join thread 3
+Join thread 4
+Join thread 5
+Join thread 6
+Join thread 7
+Chiudo fd...
+Chiudo sock_fd...
+Distrutto coda...
+Distrutto usermanager...
+POP DATA = Ciao a tutti, io ricevo e basta
+POP DATA = Ciao a tutti, io ricevo e basta
+POP DATA = Ciao a tutti, io ricevo e basta
+POP DATA = ccccccccccccccccc
+POP DATA = ccccccccccccccccc
+POP DATA = Ciao a tutti, io ricevo e basta
+POP DATA = Ciao a tutti, io ricevo e basta
+POP DATA = bbbbbbbbbbbbbbbbb
+POP DATA = ccccccccccccccccc
+POP DATA = bbbbbbbbbbbbbbbbb
+POP DATA = ccccccccccccccccc
+POP DATA = ccccccccccccccccc
+POP DATA = ddddddddddddddddddddd
+POP DATA = Ciao a tutti, io ricevo e basta
+POP DATA = Ciao a tutti, io ricevo e basta
+POP DATA = ccccccccccccccccc
+POP DATA = ccccccccccccccccc
+Free threadPool...
+Free configuration string...
+STAT: [/tmp/chatty_stats.txt]
+DIR:  [/tmp/chatty]
+PATH: [/tmp/chatty_socket]
+STAT: [(null)]
+DIR:  [(null)]
+PATH: [(null)]
+Return
+==5114== 
+==5114== HEAP SUMMARY:
+==5114==     in use at exit: 742 bytes in 51 blocks
+==5114==   total heap usage: 246 allocs, 195 frees, 236,588 bytes allocated
+==5114== 
+==5114== Searching for pointers to 51 not-freed blocks
+==5114== Checked 88,392 bytes
+==5114== 
+==5114== 22 bytes in 1 blocks are definitely lost in loss record 1 of 4
+==5114==    at 0x4C2BE7F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==5114==    by 0x10C975: readConfig (configuration.c:49)
+==5114==    by 0x1099C9: main (chatty.c:90)
+==5114== 
+==5114== 58 bytes in 3 blocks are definitely lost in loss record 2 of 4
+==5114==    at 0x4C2BE7F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==5114==    by 0x10D142: copyMsg (message.h:124)
+==5114==    by 0x10DA1E: post_msg (user.c:199)
+==5114==    by 0x10B2EB: execute (chatty.c:514)
+==5114==    by 0x10A901: worker (chatty.c:348)
+==5114==    by 0x4E3F048: start_thread (in /usr/lib/libpthread-2.25.so)
+==5114== 
+==5114== 312 bytes in 33 blocks are definitely lost in loss record 3 of 4
+==5114==    at 0x4C2BE7F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==5114==    by 0x10CD87: readData (connections.c:88)
+==5114==    by 0x10ABD3: execute (chatty.c:399)
+==5114==    by 0x10A901: worker (chatty.c:348)
+==5114==    by 0x4E3F048: start_thread (in /usr/lib/libpthread-2.25.so)
+==5114== 
+==5114== 350 bytes in 14 blocks are definitely lost in loss record 4 of 4
+==5114==    at 0x4C2BE7F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==5114==    by 0x10D142: copyMsg (message.h:124)
+==5114==    by 0x10DAD4: post_msg_all (user.c:217)
+==5114==    by 0x10B44F: execute (chatty.c:542)
+==5114==    by 0x10A901: worker (chatty.c:348)
+==5114==    by 0x4E3F048: start_thread (in /usr/lib/libpthread-2.25.so)
+==5114== 
+==5114== LEAK SUMMARY:
+==5114==    definitely lost: 742 bytes in 51 blocks
+==5114==    indirectly lost: 0 bytes in 0 blocks
+==5114==      possibly lost: 0 bytes in 0 blocks
+==5114==    still reachable: 0 bytes in 0 blocks
+==5114==         suppressed: 0 bytes in 0 blocks
+==5114== 
+==5114== ERROR SUMMARY: 4 errors from 4 contexts (suppressed: 0 from 0)
+==5114== ERROR SUMMARY: 4 errors from 4 contexts (suppressed: 0 from 0)

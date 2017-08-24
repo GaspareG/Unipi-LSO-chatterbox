@@ -30,18 +30,27 @@ int readConfig(char *fileName, struct serverConfiguration *config)
 
 		if( strcmp(key,"UnixPath") == 0 ) 
 		{
-			config->unixPath = (char*) malloc( (valueSize+1) * sizeof(char) );		
+			config->unixPath = (char*) malloc( (valueSize+1) * sizeof(char) );	
+			#if defined(MAKE_VALGRIND_HAPPY)
+			    memset(config->unixPath, 0, (valueSize+1) * sizeof(char));
+			#endif		
 			strncpy(config->unixPath, value, valueSize+1);		
 		}
 		else if( strcmp(key,"DirName") == 0 ) 
 		{
 			config->dirName = (char*) malloc( (valueSize+1) * sizeof(char) );		
+			#if defined(MAKE_VALGRIND_HAPPY)
+			    memset(config->dirName, 0, (valueSize+1) * sizeof(char));
+			#endif	
 			strncpy(config->dirName, value, valueSize+1);				
 		}
 		else if( strcmp(key,"StatFileName") == 0 ) 
 		{
-			config->statFileName = (char*) malloc( (valueSize+1) * sizeof(char) );	
-			strncpy(config->statFileName, value, valueSize+1);		
+			config->statFileName = (char*) malloc( (valueSize+1) * sizeof(char) );		
+			#if defined(MAKE_VALGRIND_HAPPY)
+			    memset(config->statFileName, 0, (valueSize+1) * sizeof(char));
+			#endif	
+			strncpy(config->statFileName, value, valueSize+1);			
 		}
 		else if( strcmp(key,"MaxConnections") == 0 ) 
 		{

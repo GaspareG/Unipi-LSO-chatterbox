@@ -86,6 +86,7 @@ int readData(long connfd, message_data_t *data)
     //tmp = readBuffer(connfd, data->hdr.receiver, MAX_NAME_LENGTH+1);
     //if( tmp < 0 ) return -1;
     data->buf = (char*) malloc( data->hdr.len * sizeof(char) );
+    memset(data->buf, 0, data->hdr.len * sizeof(char));
     tmp = readBuffer(connfd, data->buf, data->hdr.len);
     if( tmp < 0 ) return -1;
     return 1;
