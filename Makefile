@@ -12,9 +12,11 @@
 FILE_DA_CONSEGNARE=LICENSE Makefile chatty.c client.c config.h configuration.h \
                    configuration.c connections.c connections.h group.c group.h \
                    icl_hash.c icl_hash.h list.c list.h listener.c message.h    \
-                   ops.h queue.c queue.h script.sh stats.h test.sh testconf.sh \
+                   ops.h queue.c queue.h script.sh stats.h testconf.sh \
                    testfile.sh testgroups.sh testleaks.sh teststress.sh user.c \
-                   user.h DATA/chatty.conf1 DATA/chatty.conf2
+                   user.h DATA/chatty.conf1 DATA/chatty.conf2 \
+                   Relazione/Relazione.odt Relazione/Relazione.pdf doxygenconf \
+                   README.txt
 
 # inserire il nome del tarball: es. NinoBixio
 TARNAME=GaspareFerraro

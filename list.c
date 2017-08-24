@@ -75,15 +75,18 @@ list_node_t *push_list(list_t *lst, void *data) {
  *          NULL se lista vuota
  */
 void *pop_list(list_t *lst) {
-  if (lst->cursize == 0) return NULL;
-  void *ret = (lst->front)->data;
-  list_node_t *old = lst->front;
-  if (lst->cursize == 1)
-    lst->front = lst->back = NULL;
-  else
-    lst->front = (lst->front)->next;
-  lst->cursize--;
-  free(old);
+  void *ret = NULL;
+  if (lst->cursize != 0)
+  {
+    ret = (lst->front)->data;
+    list_node_t *old = lst->front;
+    if (lst->cursize == 1)
+      lst->front = lst->back = NULL;
+    else
+      lst->front = (lst->front)->next;
+    lst->cursize--;
+    free(old);
+  }
   return ret;
 }
 

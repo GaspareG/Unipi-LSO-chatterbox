@@ -48,7 +48,7 @@
 static pthread_mutex_t mtx_stats = PTHREAD_MUTEX_INITIALIZER;
 struct statistics chattyStats = {0, 0, 0, 0, 0, 0, 0};
 
-/* struttura che memorizza le configurazioni del server,
+/* struttura che memorizza le configurazioni del server, 
  * struct serverConfiguration configuration.h
  */
 struct serverConfiguration configuration = {0, 0, 0, 0, 0, NULL, NULL, NULL};
@@ -142,8 +142,7 @@ int main(int argc, char *argv[]) {
                                      configuration.maxConnections);
 
   printf("Creo group manager...\n");
-  group_manager =
-      create_group_manager(configuration.maxConnections);
+  group_manager = create_group_manager(configuration.maxConnections);
 
   printf("Creo socket!\n");
   int sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -209,7 +208,7 @@ int main(int argc, char *argv[]) {
           printf("Errore FD = %d\n", fd);
         } else if (fd == sock_fd) {
           // New client
-
+	  
           fd_c = accept(sock_fd, NULL, 0);
           printf("Accept FD = %d!\n", fd_c);
 
@@ -352,41 +351,56 @@ int signals_handler() {
 
 void *worker(void *arg) {
   int index = ((struct worker_arg *)arg)->index;
-  printf("THREAD[%d] Avvio!\n",index);
+
+  printf("\tTHREAD[%d] Start\n", index);
   message_t msg;
   memset(&msg, 0, sizeof(message_t));
 
   while (!stopped) {
+    printf("\tTHREAD[%d] Aspetto richiesta dalla coda\n", index);
     int fd = pop_queue(Q);
+    printf("\tTHREAD[%d] coda = %d\n", index, fd);
 
     if (stopped == 1) break;
     if (fd == -1) continue;
 
     if (readHeader(fd, &(msg.hdr)) > 0) {
+      printf("\tTHREAD[%d] Servo Client [%d]\n", index, fd);
+      printf("\tTHREAD[%d] header(op=%d, sender=%s)\n", index, msg.hdr.op,
+             msg.hdr.sender);
+      printf("\tTHREAD[%d] Inizio execute\n", index);
       int ret = execute(msg, fd);
+      printf("\tTHREAD[%d] Fine execute (esito=%d)\n", index, ret);
       free(msg.data.buf);
       msg.data.buf = NULL;
       if (ret == 0) {
+        printf("\tTHREAD[%d] Esito positivo, rimetto in coda\n", index);
         pthread_mutex_lock(&mtx_set);
         FD_SET(fd, &set);
         pthread_mutex_unlock(&mtx_set);
       } else {
+        printf("\tTHREAD[%d] Esito negativo, non rimetto in coda\n", index);
         if (disconnect_fd_user(user_manager, fd) == 0) {
           // update_stats(int reg, int on, int msg_del, int msg_pen, int
           // file_del, int file_pen, int err)
           update_stats(0, -1, 0, 0, 0, 0, 0);
-        } 
+        } else
+          printf("$$$$$$$$$$ERRORE DISCONNECT %d\n", fd);
       }
     } else {
       free(msg.data.buf);
       msg.data.buf = NULL;
+      printf("\tTHREAD[%d] Errore lettura\n", index);
       if (disconnect_fd_user(user_manager, fd) == 0) {
         // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
         // int file_pen, int err)
         update_stats(0, -1, 0, 0, 0, 0, 0);
-      }
+      } else
+        printf("$$$$$$$$$$ERRORE DISCONNECT %d\n", fd);
     }
   }
+
+  printf("\tTHREAD[%d] Stop\n", index);
   return NULL;
 }
 
@@ -403,10 +417,13 @@ int execute(message_t received, int client_fd) {
     return -1;
   }
 
+  printf("\t\t\tSENDER[%s] OP[%d]\n", sender, operation);
+
   free(received.data.buf);
   if (readData(client_fd, &(received.data)) < 0) {
     free(received.data.buf);
     received.data.buf = NULL;
+    printf("\t\t\tErrore lettura dati");
     return -1;
   }
 
@@ -466,7 +483,9 @@ int execute(message_t received, int client_fd) {
     // OK
     // richiesta di connessione di un client
     case CONNECT_OP: {
+      printf("\t\t\tINIZIO OP CONNECT SENDER[%s]\n", sender);
       int tmp = connect_user(user_manager, sender, client_fd);
+      printf("\t\t\tESITO CONNECT = %d\n", tmp);
       if (tmp == 0) {
         char *buffer;
         int len = user_list(user_manager, &buffer);
@@ -506,13 +525,19 @@ int execute(message_t received, int client_fd) {
         }
       }
       free(received.data.buf);
+      printf("\t\t\tFINE OP CONNECT SENDER[%s]\n", sender);
     } break;
 
     // richiesta di invio di un messaggio testuale ad un nickname o groupname
     case POSTTXT_OP: {
+      printf("\t\t\tINIZIO OP POSTTXT SENDER[%s]\n", sender);
+
       int len = received.data.hdr.len;
+      printf("\t\t\tLEN = %d\n", len);
       char *receiver = received.data.hdr.receiver;
+      printf("\t\t\tFD UTENTE[%s]\n", receiver);
       int rec_fd = connected_user(user_manager, receiver);
+      printf("\t\t\tFD UTENTE[%s] = %d\n", receiver, rec_fd);
 
       if (len > configuration.maxMsgSize) {
         // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
@@ -528,7 +553,7 @@ int execute(message_t received, int client_fd) {
         message_t *msg = copyMsg(&received);
         msg->hdr.op = TXT_MESSAGE;
         sendRequest(rec_fd, msg);
-        free(msg->data.buf);
+        free(msg->data.buf);  
         free(msg);
       } else if (rec_fd == -1)  // registrato ma non connesso
       {
@@ -538,45 +563,75 @@ int execute(message_t received, int client_fd) {
         setHeader(&(reply.hdr), OP_OK, "");
         received.hdr.op = TXT_MESSAGE;
         post_msg(user_manager, receiver, &received);
-      } else if (exists_group(group_manager, receiver) == 1 &&
-                 in_group(group_manager, receiver, sender) == 1) {
+      } 
+      else if( exists_group(group_manager, receiver) == 1 && 
+              in_group(group_manager, receiver, sender) == 1 ) 
+      {
         setHeader(&(reply.hdr), OP_OK, "");
-        char *list;
-        int size = members_group(group_manager, receiver, &list);
-        for (int i = 0; i < size; i++) {
-          int tmp_fd =
-              connected_user(user_manager, &list[i * (MAX_NAME_LENGTH + 1)]);
-          if (tmp_fd >= 0) {
+        printf("\t\t\tPOSTTXT SENDER GRUPPO E REG[%s]\n", sender);
+        char *list; 
+        int size = members_group(group_manager, receiver, &list); 
+        for(int i=0; i<size; i++)
+        {
+          printf("- GROUP_MEMBER[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+          fflush(stdout);
+          // TODO HERE
+          int tmp_fd = connected_user(user_manager, &list[i*( MAX_NAME_LENGTH + 1 )]);
+          if( tmp_fd >= 0 )
+          {
+              printf("- GROUP_MEMBER 1[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+              fflush(stdout);
             update_stats(0, 0, 1, 0, 0, 0, 0);
             message_t *msg = copyMsg(&received);
             msg->hdr.op = TXT_MESSAGE;
             sendRequest(tmp_fd, msg);
-            free(msg->data.buf);
+            free(msg->data.buf);  
             free(msg);
-          } else if (tmp_fd == -1) {
-            update_stats(0, 0, 0, 1, 0, 0, 0);
-            message_t *msg = copyMsg(&received);
-            msg->hdr.op = TXT_MESSAGE;
-            post_msg(user_manager, &list[i * (MAX_NAME_LENGTH + 1)], msg);
           }
-        }
+          else if( tmp_fd == -1 )
+          {
+              printf("- GROUP_MEMBER 2[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+              fflush(stdout);
+            update_stats(0, 0, 0, 1, 0, 0, 0);
+              printf("- GROUP_MEMBER 3[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+              printf("- OP[%d] FROM[%s] TO[%s] LEN[%d] BUF[%s]\n",received.hdr.op,received.hdr.sender,received.data.hdr.receiver, received.data.hdr.len, received.data.buf );
+              fflush(stdout);  
+              message_t *msg = copyMsg(&received);
+              printf("- GROUP_MEMBER 4[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+              fflush(stdout);
+              msg->hdr.op = TXT_MESSAGE;
+              printf("- GROUP_MEMBER 5[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+              fflush(stdout);
+
+              fflush(stdout);
+            post_msg(user_manager, &list[i*( MAX_NAME_LENGTH + 1 )], msg);
+              printf("- GROUP_MEMBER 6[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+              fflush(stdout);
+              fflush(stdout);         
+          }
+        } 
 
         free(list);
-      } else  // non registrato
+      }
+      else // non registrato
       {
         // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
         // int file_pen, int err)
         update_stats(0, 0, 0, 0, 0, 0, 1);
+      printf("\t\t\tPOSTTXT SENDER NO GRUPPO E REG[%s]\n", sender);
         setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
       }
 
       int tmp = sendHeader(client_fd, &(reply.hdr));
       free(received.data.buf);
-      if (tmp < 0) return -1;
+      printf("\t\t\tFINE OP POSTTXT SENDER[%s]\n", sender);
+      fflush(stdout);
+      if( tmp < 0 ) return -1;
     } break;
 
     // richiesta di invio di un messaggio testuale a tutti gli utenti
     case POSTTXTALL_OP: {
+      printf("\t\t\tINIZIO OP POSTTXTALL SENDER[%s]\n", sender);
       int len = received.data.hdr.len;
       if (len > configuration.maxMsgSize) {
         // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
@@ -596,15 +651,21 @@ int execute(message_t received, int client_fd) {
       int *list;
       received.hdr.op = TXT_MESSAGE;
       int pending = post_msg_all(user_manager, &received);
+      printf("\t\t\tPENDING = %d\n", pending);
       int sent = fd_list(user_manager, &list);
+      printf("\t\t\tSENT = %d\n", sent);
       for (int i = 0; i < sent; i++) {
+        printf("\t\t\tINVIO = %d\n", i);
         message_t *msg = copyMsg(&received);
         msg->hdr.op = TXT_MESSAGE;
+        printf("MANDO RICHIESTA (op=%d,from=%s,to=%s,len=%u,buf=%s)\n",
+               msg->hdr.op, msg->hdr.sender, msg->data.hdr.receiver,
+               msg->data.hdr.len, msg->data.buf);
         sendRequest(list[i], msg);
         free(msg->data.buf);
-        free(msg);
+        free(msg);  
       }
-      free(list);
+      free(list);  
       // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
       // int file_pen, int err)
       update_stats(0, 0, sent, pending, 0, 0, 0);
@@ -617,12 +678,18 @@ int execute(message_t received, int client_fd) {
         return -1;
       }
       free(received.data.buf);
+      printf("\t\t\tFINE OP POSTTXTALL SENDER[%s]\n", sender);
     } break;
 
     // richiesta di invio di un file ad un nickname o groupname
     case POSTFILE_OP: {
+      printf("\t\t\tINIZIO OP POSTFILE SENDER[%s]\n", sender);
+
+      printf("\t\t\tRECEIVED NAME[%s] SIZE[%d]\n", received.data.buf,
+             received.data.hdr.len);
       message_data_t file_data;
       readData(client_fd, &file_data);
+      printf("\t\t\tRECEIVED FILESIZE[%d]\n", file_data.hdr.len);
       if (file_data.hdr.len > configuration.maxFileSize * 1024) {
         // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
         // int file_pen, int err)
@@ -630,7 +697,7 @@ int execute(message_t received, int client_fd) {
         setHeader(&(reply.hdr), OP_MSG_TOOLONG, "");
         tmp = sendHeader(client_fd, &(reply.hdr));
         if (tmp < 0) {
-          free(file_data.buf);
+          free(file_data.buf);  
           free(received.data.buf);
           received.data.buf = NULL;
           return -1;
@@ -644,6 +711,8 @@ int execute(message_t received, int client_fd) {
         strcat(filename, "/");
         char *lastSlash = strrchr(received.data.buf, '/');
 
+        printf("SLASSSSSHHHH P[%s] L[%d]\n", received.data.buf,
+               received.data.hdr.len);
         if (lastSlash != NULL) {
           lastSlash++;
           int nlen = received.data.hdr.len - (lastSlash - received.data.buf);
@@ -659,11 +728,12 @@ int execute(message_t received, int client_fd) {
           fclose(fd);
           free(received.data.buf);
           received.data.buf = NULL;
-          free(file_data.buf);
-          free(filename);
+          free(file_data.buf);  
+          free(filename);       
           return -1;
         }
 
+        printf("\t\t\tAPERTO %s\n", filename);
         if (fwrite(file_data.buf, sizeof(char), file_data.hdr.len, fd) !=
             file_data.hdr.len)
 
@@ -673,8 +743,8 @@ int execute(message_t received, int client_fd) {
           fclose(fd);
           free(received.data.buf);
           received.data.buf = NULL;
-          free(file_data.buf);
-          free(filename);
+          free(file_data.buf);  
+          free(filename);       
           return -1;
         }
 
@@ -689,11 +759,12 @@ int execute(message_t received, int client_fd) {
           message_t *msg = copyMsg(&received);
           msg->hdr.op = FILE_MESSAGE;
           tmp = sendRequest(rec_fd, msg);
-          free(msg->data.buf);
+          free(msg->data.buf);  
           free(msg);
           // update_stats(int reg, int on, int msg_del, int msg_pen, int
           // file_del, int file_pen, int err)
           update_stats(0, 0, 0, 0, 1, 0, 0);
+
         } else if (rec_fd == -1)  // registrato ma non connesso
         {
           setHeader(&(reply.hdr), OP_OK, "");
@@ -703,31 +774,57 @@ int execute(message_t received, int client_fd) {
           // update_stats(int reg, int on, int msg_del, int msg_pen, int
           // file_del, int file_pen, int err)
           update_stats(0, 0, 0, 0, 0, 1, 0);
-        } else if (exists_group(group_manager, receiver) == 1 &&
-                   in_group(group_manager, receiver, sender) == 1) {
+
+          }       else if( exists_group(group_manager, receiver) == 1 && 
+                in_group(group_manager, receiver, sender) == 1 ) 
+        {
           setHeader(&(reply.hdr), OP_OK, "");
-          char *list;
-          int size = members_group(group_manager, receiver, &list);
-          for (int i = 0; i < size; i++) {
-            int tmp_fd =
-                connected_user(user_manager, &list[i * (MAX_NAME_LENGTH + 1)]);
-            if (tmp_fd >= 0) {
-              update_stats(0, 0, 0, 0, 1, 0, 0);
+          printf("\t\t\tPOSTFILE SENDER GRUPPO E REG[%s]\n", sender);
+          char *list; 
+          int size = members_group(group_manager, receiver, &list); 
+          for(int i=0; i<size; i++)
+          {
+            printf("- GROUP_MEMBER[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+            fflush(stdout);
+            // TODO HERE
+            int tmp_fd = connected_user(user_manager, &list[i*( MAX_NAME_LENGTH + 1 )]);
+            if( tmp_fd >= 0 )
+            {
+                printf("- GROUP_MEMBER 1[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+                fflush(stdout);
+              update_stats(0, 0, 1, 0, 0, 0, 0);
               message_t *msg = copyMsg(&received);
               msg->hdr.op = FILE_MESSAGE;
               sendRequest(tmp_fd, msg);
-              free(msg->data.buf);
+              free(msg->data.buf);  
               free(msg);
-            } else if (tmp_fd == -1) {
-              update_stats(0, 0, 0, 0, 0, 1, 0);
-              message_t *msg = copyMsg(&received);
-              msg->hdr.op = FILE_MESSAGE;
-              post_msg(user_manager, &list[i * (MAX_NAME_LENGTH + 1)], msg);
             }
-          }
+            else if( tmp_fd == -1 )
+            {
+                printf("- GROUP_MEMBER 2[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+                fflush(stdout);
+              update_stats(0, 0, 0, 1, 0, 0, 0);
+                printf("- GROUP_MEMBER 3[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+                printf("- OP[%d] FROM[%s] TO[%s] LEN[%d] BUF[%s]\n",received.hdr.op,received.hdr.sender,received.data.hdr.receiver, received.data.hdr.len, received.data.buf );
+                fflush(stdout);  
+                message_t *msg = copyMsg(&received);
+                printf("- GROUP_MEMBER 4[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+                fflush(stdout);
+                msg->hdr.op = FILE_MESSAGE;
+                printf("- GROUP_MEMBER 5[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+                fflush(stdout);
+
+                fflush(stdout);
+              post_msg(user_manager, &list[i*( MAX_NAME_LENGTH + 1 )], msg);
+                printf("- GROUP_MEMBER 6[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+                fflush(stdout);
+                fflush(stdout);         
+            }
+          } 
 
           free(list);
-        } else  // non registrato
+        }
+        else  // non registrato
         {
           // update_stats(int reg, int on, int msg_del, int msg_pen, int
           // file_del, int file_pen, int err)
@@ -736,8 +833,8 @@ int execute(message_t received, int client_fd) {
         }
 
         tmp = sendHeader(client_fd, &(reply.hdr));
-        free(file_data.buf);
-        free(filename);
+        free(file_data.buf);  
+        free(filename);       
         if (tmp < 0) {
           free(received.data.buf);
           received.data.buf = NULL;
@@ -745,10 +842,12 @@ int execute(message_t received, int client_fd) {
         }
       }
       free(received.data.buf);
+      printf("\t\tFINE OP POSTFILE SENDER[%s]\n", sender);
     } break;
 
     // richiesta di recupero di un file
     case GETFILE_OP: {
+      printf("\t\t\tINIZIO OP GETFILE SENDER[%s]\n", sender);
 
       int pathlen =
           (strlen(configuration.dirName) + strlen(received.data.buf) + 2);
@@ -764,7 +863,7 @@ int execute(message_t received, int client_fd) {
         setHeader(&(reply.hdr), OP_NO_SUCH_FILE, "");
         tmp = sendHeader(client_fd, &(reply.hdr));
         if (tmp < 0) {
-          free(filename);
+          free(filename);  
           free(received.data.buf);
           received.data.buf = NULL;
           return -1;
@@ -775,7 +874,7 @@ int execute(message_t received, int client_fd) {
           setHeader(&(reply.hdr), OP_NO_SUCH_FILE, "");
           tmp = sendHeader(client_fd, &(reply.hdr));
           if (tmp < 0) {
-            free(filename);
+            free(filename);  
             free(received.data.buf);
             received.data.buf = NULL;
             return -1;
@@ -793,7 +892,7 @@ int execute(message_t received, int client_fd) {
           setHeader(&(reply.hdr), OP_NO_SUCH_FILE, "");
           tmp = sendHeader(client_fd, &(reply.hdr));
           if (tmp < 0) {
-            free(filename);
+            free(filename);  
             return -1;
           }
         } else {
@@ -806,7 +905,7 @@ int execute(message_t received, int client_fd) {
           setHeader(&(reply.hdr), OP_OK, "");
           tmp = sendHeader(client_fd, &(reply.hdr));
           if (tmp < 0) {
-            free(filename);
+            free(filename);  
             free(received.data.buf);
             received.data.buf = NULL;
             return -1;
@@ -814,27 +913,31 @@ int execute(message_t received, int client_fd) {
           setData(&(reply.data), "", mappedfile, filesize);
           tmp = sendData(client_fd, &(reply.data));
           if (tmp < 0) {
-            free(filename);
+            free(filename);  
             free(received.data.buf);
             received.data.buf = NULL;
             return -1;
           }
-          free(filename);
+          free(filename);  
         }
       }
       free(received.data.buf);
+      printf("\t\t\tFINE OP GETFILE SENDER[%s]\n", sender);
     } break;
 
     // richiesta di recupero della history dei messaggi
     case GETPREVMSGS_OP: {
+      printf("\t\t\tINIZIO OP GETPREVMSGS SENDER[%s]\n", sender);
       list_t *prev = retrieve_user_msg(user_manager, sender);
+      printf("\t\t\tGETPREVSMGS len=%ld\n", prev->cursize);
       if (prev != NULL) {
         setHeader(&(reply.hdr), OP_OK, "");
         setData(&(reply.data), "", (char *)&(prev->cursize), sizeof(size_t));
         sendRequest(client_fd, &reply);
         message_t *to_send;
         while ((to_send = (message_t *)pop_list(prev)) != NULL) {
-
+          printf("---------------------------------INVIO[%d][%s]\n",
+                 to_send->hdr.op, to_send->data.buf);
           if (to_send->hdr.op == TXT_MESSAGE) {
             // update_stats(int reg, int on, int msg_del, int msg_pen, int
             // file_del, int file_pen, int err)
@@ -845,7 +948,7 @@ int execute(message_t received, int client_fd) {
             update_stats(0, 0, 0, 0, 1, -1, 0);
           }
           int tmp = sendRequest(client_fd, to_send);
-          free(to_send->data.buf);
+          free(to_send->data.buf);  
           free(to_send);
           if (tmp < 0) {
             free(received.data.buf);
@@ -853,16 +956,19 @@ int execute(message_t received, int client_fd) {
             return -1;
           }
         }
+
       } else {
         setHeader(&(reply.hdr), OP_FAIL, "");
         sendHeader(client_fd, &(reply.hdr));
       }
       free(received.data.buf);
+      printf("\t\t\tFINE OP GETPREVMSGS SENDER[%s]\n", sender);
     } break;
 
     // OK
     // richiesta di avere la lista di tutti gli utenti attualmente connessi
     case USRLIST_OP: {
+      printf("\t\t\tINIZIO OP USRLIST SENDER[%s]\n", sender);
       char *buffer;
       int len = user_list(user_manager, &buffer);
       setHeader(&(reply.hdr), OP_OK, "");
@@ -880,11 +986,13 @@ int execute(message_t received, int client_fd) {
         return -1;
       }
       free(received.data.buf);
+      printf("\t\t\tFINE OP USRLIST SENDER[%s]\n", sender);
     } break;
 
     // OK
     // richiesta di deregistrazione di un nickname o groupname
     case UNREGISTER_OP: {
+      printf("\t\t\tINIZIO OP UNREGISTER SENDER[%s]\n", sender);
       if (disconnect_user(user_manager, sender) == 0) {
         // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
         // int file_pen, int err)
@@ -901,11 +1009,13 @@ int execute(message_t received, int client_fd) {
 
       free(received.data.buf);
       sendHeader(client_fd, &(reply.hdr));
+      printf("\t\t\tFINE OP UNREGISTER SENDER[%s]\n", sender);
     } break;
 
     // OK
     // richiesta di disconnessione
     case DISCONNECT_OP: {
+      printf("\t\t\tINIZIO OP DISCONNECT SENDER[%s]\n", sender);
       if (disconnect_user(user_manager, sender) == 0) {
         // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
         // int file_pen, int err)
@@ -915,75 +1025,121 @@ int execute(message_t received, int client_fd) {
         setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
       sendHeader(client_fd, &(reply.hdr));
       free(received.data.buf);
+      printf("\t\t\tFINE OP DISCONNECT SENDER[%s]\n", sender);
     } break;
 
     // richiesta di creazione di un gruppo
     case CREATEGROUP_OP: {
+
+      printf("\t\t\tINIZIO OP CREATEGROUP SENDER[%s]\n", sender);
+      fflush(stdout);
       char *receiver = received.data.hdr.receiver;
       int rec_fd = connected_user(user_manager, receiver);
-      if (rec_fd == -2) {
+      printf("\t\t\t\tCREO GROUP[%s]\n",receiver);
+      fflush(stdout);
+      if( rec_fd == -2 )
+      {
         int ret = create_group(group_manager, receiver);
-        if (ret == 1) {
-          char *member = (char *)malloc(sizeof(char) * (1 + strlen(sender)));
-          memset(member, 0, sizeof(char) * (1 + strlen(sender)));
-          strncpy(member, sender, sizeof(char) * (1 + strlen(sender)));
+        if( ret == 1 )
+        {
+          printf("\t\t\t\tCREO GROUP[%s]\n",receiver);
+          fflush(stdout);
+      char *member = (char*)malloc(sizeof(char)*(1+strlen(sender)));
+      memset(member, 0, sizeof(char)*(1+strlen(sender)));
+      strncpy(member, sender, sizeof(char)*(1+strlen(sender)));
           ret = join_group(group_manager, receiver, member);
-          if (ret == 1) {
+          if( ret == 1 )
+          {
+            printf("\t\t\t\tJOIN GROUP[%s]\n",receiver);
+            fflush(stdout);
             setHeader(&(reply.hdr), OP_OK, "");
-          } else {
-            setHeader(&(reply.hdr), OP_FAIL, "");
           }
-        } else {
+          else
+          {
+            printf("\t\t\t\tNO GROUP[%s]\n",receiver);
+            fflush(stdout);
+            setHeader(&(reply.hdr), OP_FAIL, "");
+          }  
+        }
+        else
+        {
+          printf("\t\t\t\tNO CREO GROUP[%s]\n",receiver);
+          fflush(stdout);
           setHeader(&(reply.hdr), OP_NICK_ALREADY, "");
         }
-      } else {
+      }
+      else
+      {
+        printf("\t\t\t\tNO CREO GROUP[%s]\n",receiver);
+        fflush(stdout);
         setHeader(&(reply.hdr), OP_NICK_ALREADY, "");
       }
       int tmp = sendHeader(client_fd, &(reply.hdr));
       free(received.data.buf);
-      if (tmp < 0) return -1;
+      printf("\t\t\tFINE OP CREATEGROUP SENDER[%s]\n", sender);
+      fflush(stdout);
+      if( tmp < 0 ) return -1;
     } break;
 
     // richiesta di aggiunta ad un gruppo
     case ADDGROUP_OP: {
+      printf("\t\t\tINIZIO OP ADDGROUP SENDER[%s]\n", sender);
       char *receiver = received.data.hdr.receiver;
-      char *member = (char *)malloc(sizeof(char) * (1 + strlen(sender)));
-      memset(member, 0, sizeof(char) * (1 + strlen(sender)));
-      strncpy(member, sender, sizeof(char) * (1 + strlen(sender)));
+      char *member = (char*)malloc(sizeof(char)*(1+strlen(sender)));
+      memset(member, 0, sizeof(char)*(1+strlen(sender)));
+      strncpy(member, sender, sizeof(char)*(1+strlen(sender)));
       int ret = join_group(group_manager, receiver, member);
-
-      if (ret == 1) {
+      
+      if( ret == 1 )
+      {
+        printf("\t\t\t\tSI JOIN[%s]\n",receiver);
         setHeader(&(reply.hdr), OP_OK, "");
-      } else {
+      }
+      else
+      {
+        printf("\t\t\t\tNO JOIN[%s]\n",receiver);
         setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
       }
       int tmp = sendHeader(client_fd, &(reply.hdr));
       free(received.data.buf);
-      if (tmp < 0) return -1;
+      printf("\t\t\tFINE OP ADDGROUP SENDER[%s]\n", sender);
+      if( tmp < 0 ) return -1;
     } break;
 
     // richiesta di rimozione da un gruppo
     case DELGROUP_OP: {
+      printf("\t\t\tINIZIO OP DELGROUP SENDER[%s]\n", sender);
+      fflush(stdout);
       char *receiver = received.data.hdr.receiver;
 
-      char *member = (char *)malloc(sizeof(char) * (1 + strlen(sender)));
-      memset(member, 0, sizeof(char) * (1 + strlen(sender)));
-      strncpy(member, sender, sizeof(char) * (1 + strlen(sender)));
+      char *member = (char*)malloc(sizeof(char)*(1+strlen(sender)));
+      memset(member, 0, sizeof(char)*(1+strlen(sender)));
+      strncpy(member, sender, sizeof(char)*(1+strlen(sender)));
 
       int ret = leave_group(group_manager, receiver, member);
       free(member);
-      if (ret == 1) {
+      if( ret == 1 )
+      {
+        printf("\t\t\t\tSI LEAVE[%s]\n",receiver);
+        fflush(stdout);
         setHeader(&(reply.hdr), OP_OK, "");
-      } else {
+      }
+      else
+      {
+        printf("\t\t\t\tNO LEAVE[%s]\n",receiver);
+        fflush(stdout);
         setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
       }
       int tmp = sendHeader(client_fd, &(reply.hdr));
       free(received.data.buf);
-      if (tmp < 0) return -1;
+      printf("\t\t\tFINE OP DELGROUP SENDER[%s]\n", sender);
+      fflush(stdout);
+      if( tmp < 0 ) return -1;
     } break;
 
     default: { } break; }
 
+  printf("\t\t\tEND SENDER[%s] OP[%d]\n", sender, operation);
   return 0;
 }
 
