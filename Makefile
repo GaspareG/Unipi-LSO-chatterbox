@@ -9,11 +9,12 @@
 ##########################################################
 # IMPORTANTE: completare la lista dei file da consegnare
 # 
-FILE_DA_CONSEGNARE=Makefile chatty.c message.h ops.h stats.h config.h \
-		   DATA/chatty.conf1 DATA/chatty.conf2 connections.c connections.h \
-		   configuration.h configuration.c \
-	           group.h group.c user.h user.c icl_hash.h icl_hash.c \
-		   queue.h queue.c list.h list.c group.h group.c
+FILE_DA_CONSEGNARE=LICENSE Makefile chatty.c client.c config.h configuration.h \
+                   configuration.c connections.c connections.h group.c group.h \
+                   icl_hash.c icl_hash.h list.c list.h listener.c message.h    \
+                   ops.h queue.c queue.h script.sh stats.h test.sh testconf.sh \
+                   testfile.sh testgroups.sh testleaks.sh teststress.sh user.c \
+                   user.h DATA/chatty.conf1 DATA/chatty.conf2
 
 # inserire il nome del tarball: es. NinoBixio
 TARNAME=GaspareFerraro
@@ -179,12 +180,13 @@ test5:
 test6:
 	make cleanall
 	\mkdir -p $(DIR_PATH)
-	make all
-	./chatty -f DATA/chatty.conf1 > out.txt&
+	make all		
+	# /usr/bin/valgrind --leak-check=full ./chatty -f DATA/chatty.conf1 >& ./valgrind_out &
+	./chatty -f DATA/chatty.conf1 > out.txt &
 	./testgroups.sh $(UNIX_PATH)
 	killall -QUIT -w chatty
+	#k illall -QUIT -w valgrind
 	@echo "********** Test6 superato!"
-
 
 
 # target per la consegna

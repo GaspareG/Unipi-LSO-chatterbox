@@ -64,12 +64,12 @@ int create_group(group_manager_t* manager, char *groupname)
 {
   int ret = -1;
   pthread_mutex_lock(manager->mtx);
-  printf("******CREO GRUPPO(%s)\n",groupname);
   group_t *group = (group_t *) icl_hash_find(manager->groups, (void*)groupname);
   if( group == NULL )
   {
     group_t *to_add = (group_t*) malloc( sizeof(group_t) );
-    strncpy(to_add->groupname, groupname, MAX_NAME_LENGTH+1);  
+    strncpy(to_add->groupname, groupname, MAX_NAME_LENGTH+1);
+    to_add->size = 0 ;  
     to_add->member = icl_hash_create(manager->buckets, string_hash_function, string_key_compare);
     if( icl_hash_insert(manager->groups, to_add->groupname, (void*)to_add) != NULL )
     {
@@ -86,28 +86,15 @@ int join_group(group_manager_t* manager, char *groupname, char *username)
   int ret = -1;
   pthread_mutex_lock(manager->mtx);
   group_t *group = (group_t *) icl_hash_find(manager->groups, (void*)groupname);
-  printf("*************** JOIN gruppo[%s] nome[%s]\n",groupname, username);
   if( group != NULL )
   {
-    printf("*************** OK NO EXISTS [%s] [%s]\n",groupname, username);
     char *name = (char*) icl_hash_find(group->member, (void*)username);
     if( name == NULL ) 
     {
-      printf("*************** OK NO FIND [%s] [%s]\n",groupname, username);
-      //int lname = MAX_NAME_LENGTH+1;
-      //char *mname = (char*) malloc( lname*sizeof(char) );
-      //memset(mname, 0, lname*sizeof(char) );
-      //strncpy(mname, username, lname);
-      //printf("*************** OK NO FIND [%s] [%s] [%d][%s]\n",groupname, username, lname, mname);
       if( icl_hash_insert(group->member, (void*) username, (void*)username) != NULL )
       {
        ret = 1;
-        printf("*************** OK INSERT [%s] [%s]\n",groupname, username);
-      }
-      else
-      {
-        printf("*************** NO INSERT [%s] [%s]\n",groupname, username);
-        
+        group->size = group->size + 1 ;
       }
     }  
     icl_hash_dump(stdout,group->member);
@@ -123,23 +110,14 @@ int leave_group(group_manager_t* manager, char *groupname, char *username)
   int ret = -1;
   pthread_mutex_lock(manager->mtx);
   group_t *group = (group_t *) icl_hash_find(manager->groups, groupname);
-  printf("*************** LIVE GRUPPO[%s] NOME[%s]\n",groupname, username);
-  fflush(stdout);
   if( group != NULL )
   {
-    printf("*************** OK GROUP ESISTE [%s] [%s]\n",group->groupname, username);
-        fflush(stdout);
     char *name = (char*) icl_hash_find(group->member, (void*)username);
-    printf("*************** OK NAME [%s]\n",name);
-        fflush(stdout);
     if( name != NULL ) 
     {
-      printf("*************** OK USER IN GROUP [%s] [%s]\n",groupname, username);
-        fflush(stdout);
-      if( icl_hash_delete(group->member, username, free_name_user, NULL) == 0 ) // TODO MEMCHECK
+      if( icl_hash_delete(group->member, username, free_name_user, NULL) == 0 ) 
       {
-        printf("*************** OKDELETE [%s] [%s]\n",groupname, username);
-        fflush(stdout);
+        group->size = group->size - 1 ;
         ret = 1;
       }
      
@@ -149,15 +127,21 @@ int leave_group(group_manager_t* manager, char *groupname, char *username)
   return ret;
 }
 
-// Invio di un messaggio in gruppo
-int post_group(group_manager_t* manager, char *groupname, message_t *msg)
+
+// Controllo se utente il gruppo
+int exists_group(group_manager_t* manager, char *groupname)
 {
   int ret = -1;
   pthread_mutex_lock(manager->mtx);
-
+  group_t *group = (group_t *) icl_hash_find(manager->groups, groupname);
+  if( group != NULL )
+  {
+    ret = 1;
+  }
   pthread_mutex_unlock(manager->mtx);
   return ret;
 }
+
 
 // Controllo se utente in gruppo
 int in_group(group_manager_t* manager, char *groupname, char *username)
@@ -169,6 +153,34 @@ int in_group(group_manager_t* manager, char *groupname, char *username)
   {
     char *name = (char*) icl_hash_find(group->member, username);
     if( name != NULL ) ret = 1;
+  }
+  pthread_mutex_unlock(manager->mtx);
+  return ret;
+}
+
+// Invio di un messaggio in gruppo
+int members_group(group_manager_t* manager, char *groupname, char **list)
+{
+  int ret = -1;
+  pthread_mutex_lock(manager->mtx);
+  group_t *group = (group_t *) icl_hash_find(manager->groups, groupname);
+  if( group != NULL )
+  {
+    ret = 0 ;
+    int size = group->size;
+    int i;
+    icl_entry_t *j;
+    char *kp, *dp;
+    *list = (char*) malloc( ( MAX_NAME_LENGTH + 1 ) * size * sizeof(char));
+    memset(*list, 0, ( MAX_NAME_LENGTH + 1 ) * size * sizeof(char));
+    char *tmp = *list;
+    icl_hash_foreach(group->member, i, j, kp, dp) 
+    {
+      strncpy(tmp, dp, MAX_NAME_LENGTH + 1);
+      ret++;
+      tmp += MAX_NAME_LENGTH + 1;
+    }
+
   }
   pthread_mutex_unlock(manager->mtx);
   return ret;

@@ -22,7 +22,7 @@
 typedef struct  {
   char groupname[MAX_NAME_LENGTH+1];
   icl_hash_t *member; 
-  
+  int size;   
 } group_t;
 
 typedef struct {
@@ -47,11 +47,14 @@ int join_group(group_manager_t* manager, char *groupname, char *username);
 // Abbandono di un utente di un gruppo
 int leave_group(group_manager_t* manager, char *groupname, char *username);
 
-// Invio di un messaggio in gruppo
-int post_group(group_manager_t* manager, char *groupname, message_t *msg);
-
 // Controllo se utente in gruppo
 int in_group(group_manager_t* manager, char *groupname, char *username);
+
+// Controllo se utente il gruppo
+int exists_group(group_manager_t* manager, char *groupname);
+
+// Invio di un messaggio in gruppo
+int members_group(group_manager_t* manager, char *groupname, char **list);
 
 // Libera un gruppo in memoria
 void free_group(void *group);

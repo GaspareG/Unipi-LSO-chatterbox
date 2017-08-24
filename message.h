@@ -114,7 +114,7 @@ static inline void setData(message_data_t *data, char *rcv, const char *buf,
 }
 
 static inline message_t *copyMsg(message_t *msg) {
-  message_t *cpy = (message_t *)malloc(sizeof(message_t));
+  message_t *cpy = (message_t *) malloc(sizeof(message_t));
 #if defined(MAKE_VALGRIND_HAPPY)
   memset((char *)cpy, 0, sizeof(message_t));
 #endif
@@ -122,19 +122,12 @@ static inline message_t *copyMsg(message_t *msg) {
   strncpy(cpy->hdr.sender, msg->hdr.sender, MAX_NAME_LENGTH + 1);
   cpy->data.hdr.len = msg->data.hdr.len;
   strncpy(cpy->data.hdr.receiver, msg->data.hdr.receiver, MAX_NAME_LENGTH + 1);
-  // if ( cpy->data.hdr.len == 0 )
-  //{
-  //  cpy->data.buf = NULL;
-  //}
-  // else
-  //{
   cpy->data.buf = (char *)malloc(cpy->data.hdr.len * sizeof(char));
 #if defined(MAKE_VALGRIND_HAPPY)
   memset(cpy->data.buf, 0, cpy->data.hdr.len * sizeof(char));
 #endif
   for (int i = 0; i < cpy->data.hdr.len; i++)
     cpy->data.buf[i] = msg->data.buf[i];
-  //}
   return cpy;
 }
 

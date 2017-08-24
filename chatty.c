@@ -129,7 +129,6 @@ int main(int argc, char *argv[]) {
   printf("%s \t-> [%lu]\n", "maxMsgSize", configuration.maxMsgSize);
   printf("%s \t-> [%lu]\n", "threadsInPool", configuration.threadsInPool);
   printf("%s \t-> [%lu]\n", "maxConnections", configuration.maxConnections);
-  fflush(stdout);
 
   // Registro handler per i segnali
   printf("Registro segnali!\n");
@@ -554,7 +553,7 @@ int execute(message_t received, int client_fd) {
         message_t *msg = copyMsg(&received);
         msg->hdr.op = TXT_MESSAGE;
         sendRequest(rec_fd, msg);
-        free(msg->data.buf);  // TODO: MEMCHECK
+        free(msg->data.buf);  
         free(msg);
       } else if (rec_fd == -1)  // registrato ma non connesso
       {
@@ -564,18 +563,70 @@ int execute(message_t received, int client_fd) {
         setHeader(&(reply.hdr), OP_OK, "");
         received.hdr.op = TXT_MESSAGE;
         post_msg(user_manager, receiver, &received);
-      } else  // non registrato
+      } 
+      else if( exists_group(group_manager, receiver) == 1 && 
+              in_group(group_manager, receiver, sender) == 1 ) 
+      {
+        setHeader(&(reply.hdr), OP_OK, "");
+        printf("\t\t\tPOSTTXT SENDER GRUPPO E REG[%s]\n", sender);
+        char *list; 
+        int size = members_group(group_manager, receiver, &list); 
+        for(int i=0; i<size; i++)
+        {
+          printf("- GROUP_MEMBER[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+          fflush(stdout);
+          // TODO HERE
+          int tmp_fd = connected_user(user_manager, &list[i*( MAX_NAME_LENGTH + 1 )]);
+          if( tmp_fd >= 0 )
+          {
+              printf("- GROUP_MEMBER 1[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+              fflush(stdout);
+            update_stats(0, 0, 1, 0, 0, 0, 0);
+            message_t *msg = copyMsg(&received);
+            msg->hdr.op = TXT_MESSAGE;
+            sendRequest(tmp_fd, msg);
+            free(msg->data.buf);  
+            free(msg);
+          }
+          else if( tmp_fd == -1 )
+          {
+              printf("- GROUP_MEMBER 2[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+              fflush(stdout);
+            update_stats(0, 0, 0, 1, 0, 0, 0);
+              printf("- GROUP_MEMBER 3[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+              printf("- OP[%d] FROM[%s] TO[%s] LEN[%d] BUF[%s]\n",received.hdr.op,received.hdr.sender,received.data.hdr.receiver, received.data.hdr.len, received.data.buf );
+              fflush(stdout);  
+              message_t *msg = copyMsg(&received);
+              printf("- GROUP_MEMBER 4[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+              fflush(stdout);
+              msg->hdr.op = TXT_MESSAGE;
+              printf("- GROUP_MEMBER 5[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+              fflush(stdout);
+
+              fflush(stdout);
+            post_msg(user_manager, &list[i*( MAX_NAME_LENGTH + 1 )], msg);
+              printf("- GROUP_MEMBER 6[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+              fflush(stdout);
+              fflush(stdout);         
+          }
+        } 
+
+        free(list);
+      }
+      else // non registrato
       {
         // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
         // int file_pen, int err)
         update_stats(0, 0, 0, 0, 0, 0, 1);
+      printf("\t\t\tPOSTTXT SENDER NO GRUPPO E REG[%s]\n", sender);
         setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
       }
 
-      sendHeader(client_fd, &(reply.hdr));
+      int tmp = sendHeader(client_fd, &(reply.hdr));
       free(received.data.buf);
-
       printf("\t\t\tFINE OP POSTTXT SENDER[%s]\n", sender);
+      fflush(stdout);
+      if( tmp < 0 ) return -1;
     } break;
 
     // richiesta di invio di un messaggio testuale a tutti gli utenti
@@ -612,10 +663,9 @@ int execute(message_t received, int client_fd) {
                msg->data.hdr.len, msg->data.buf);
         sendRequest(list[i], msg);
         free(msg->data.buf);
-        free(msg);  // TODO MEMCHECK
-        // free(&list[i]); // TODO MEMCHECK
+        free(msg);  
       }
-      free(list);  // TODO MEMCHECK
+      free(list);  
       // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
       // int file_pen, int err)
       update_stats(0, 0, sent, pending, 0, 0, 0);
@@ -647,7 +697,7 @@ int execute(message_t received, int client_fd) {
         setHeader(&(reply.hdr), OP_MSG_TOOLONG, "");
         tmp = sendHeader(client_fd, &(reply.hdr));
         if (tmp < 0) {
-          free(file_data.buf);  // TODO: MEMCHECK
+          free(file_data.buf);  
           free(received.data.buf);
           received.data.buf = NULL;
           return -1;
@@ -678,8 +728,8 @@ int execute(message_t received, int client_fd) {
           fclose(fd);
           free(received.data.buf);
           received.data.buf = NULL;
-          free(file_data.buf);  // TODO: MEMCHECK
-          free(filename);       // TODO: MEMCHECK
+          free(file_data.buf);  
+          free(filename);       
           return -1;
         }
 
@@ -693,8 +743,8 @@ int execute(message_t received, int client_fd) {
           fclose(fd);
           free(received.data.buf);
           received.data.buf = NULL;
-          free(file_data.buf);  // TODO: MEMCHECK
-          free(filename);       // TODO: MEMCHECK
+          free(file_data.buf);  
+          free(filename);       
           return -1;
         }
 
@@ -709,7 +759,7 @@ int execute(message_t received, int client_fd) {
           message_t *msg = copyMsg(&received);
           msg->hdr.op = FILE_MESSAGE;
           tmp = sendRequest(rec_fd, msg);
-          free(msg->data.buf);  // TODO: MEMCHECK
+          free(msg->data.buf);  
           free(msg);
           // update_stats(int reg, int on, int msg_del, int msg_pen, int
           // file_del, int file_pen, int err)
@@ -725,7 +775,56 @@ int execute(message_t received, int client_fd) {
           // file_del, int file_pen, int err)
           update_stats(0, 0, 0, 0, 0, 1, 0);
 
-        } else  // non registrato
+          }       else if( exists_group(group_manager, receiver) == 1 && 
+                in_group(group_manager, receiver, sender) == 1 ) 
+        {
+          setHeader(&(reply.hdr), OP_OK, "");
+          printf("\t\t\tPOSTFILE SENDER GRUPPO E REG[%s]\n", sender);
+          char *list; 
+          int size = members_group(group_manager, receiver, &list); 
+          for(int i=0; i<size; i++)
+          {
+            printf("- GROUP_MEMBER[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+            fflush(stdout);
+            // TODO HERE
+            int tmp_fd = connected_user(user_manager, &list[i*( MAX_NAME_LENGTH + 1 )]);
+            if( tmp_fd >= 0 )
+            {
+                printf("- GROUP_MEMBER 1[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+                fflush(stdout);
+              update_stats(0, 0, 1, 0, 0, 0, 0);
+              message_t *msg = copyMsg(&received);
+              msg->hdr.op = FILE_MESSAGE;
+              sendRequest(tmp_fd, msg);
+              free(msg->data.buf);  
+              free(msg);
+            }
+            else if( tmp_fd == -1 )
+            {
+                printf("- GROUP_MEMBER 2[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+                fflush(stdout);
+              update_stats(0, 0, 0, 1, 0, 0, 0);
+                printf("- GROUP_MEMBER 3[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+                printf("- OP[%d] FROM[%s] TO[%s] LEN[%d] BUF[%s]\n",received.hdr.op,received.hdr.sender,received.data.hdr.receiver, received.data.hdr.len, received.data.buf );
+                fflush(stdout);  
+                message_t *msg = copyMsg(&received);
+                printf("- GROUP_MEMBER 4[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+                fflush(stdout);
+                msg->hdr.op = FILE_MESSAGE;
+                printf("- GROUP_MEMBER 5[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+                fflush(stdout);
+
+                fflush(stdout);
+              post_msg(user_manager, &list[i*( MAX_NAME_LENGTH + 1 )], msg);
+                printf("- GROUP_MEMBER 6[%d][%s]\n",i,&list[i*( MAX_NAME_LENGTH + 1 )]);
+                fflush(stdout);
+                fflush(stdout);         
+            }
+          } 
+
+          free(list);
+        }
+        else  // non registrato
         {
           // update_stats(int reg, int on, int msg_del, int msg_pen, int
           // file_del, int file_pen, int err)
@@ -734,8 +833,8 @@ int execute(message_t received, int client_fd) {
         }
 
         tmp = sendHeader(client_fd, &(reply.hdr));
-        free(file_data.buf);  // TODO: MEMCHECK
-        free(filename);       // TODO: MEMCHECK
+        free(file_data.buf);  
+        free(filename);       
         if (tmp < 0) {
           free(received.data.buf);
           received.data.buf = NULL;
@@ -764,7 +863,7 @@ int execute(message_t received, int client_fd) {
         setHeader(&(reply.hdr), OP_NO_SUCH_FILE, "");
         tmp = sendHeader(client_fd, &(reply.hdr));
         if (tmp < 0) {
-          free(filename);  // TODO MEMCHECK
+          free(filename);  
           free(received.data.buf);
           received.data.buf = NULL;
           return -1;
@@ -775,7 +874,7 @@ int execute(message_t received, int client_fd) {
           setHeader(&(reply.hdr), OP_NO_SUCH_FILE, "");
           tmp = sendHeader(client_fd, &(reply.hdr));
           if (tmp < 0) {
-            free(filename);  // TODO MEMCHECK
+            free(filename);  
             free(received.data.buf);
             received.data.buf = NULL;
             return -1;
@@ -793,7 +892,7 @@ int execute(message_t received, int client_fd) {
           setHeader(&(reply.hdr), OP_NO_SUCH_FILE, "");
           tmp = sendHeader(client_fd, &(reply.hdr));
           if (tmp < 0) {
-            free(filename);  // TODO MEMCHECK
+            free(filename);  
             return -1;
           }
         } else {
@@ -806,7 +905,7 @@ int execute(message_t received, int client_fd) {
           setHeader(&(reply.hdr), OP_OK, "");
           tmp = sendHeader(client_fd, &(reply.hdr));
           if (tmp < 0) {
-            free(filename);  // TODO MEMCHECK
+            free(filename);  
             free(received.data.buf);
             received.data.buf = NULL;
             return -1;
@@ -814,12 +913,12 @@ int execute(message_t received, int client_fd) {
           setData(&(reply.data), "", mappedfile, filesize);
           tmp = sendData(client_fd, &(reply.data));
           if (tmp < 0) {
-            free(filename);  // TODO MEMCHECK
+            free(filename);  
             free(received.data.buf);
             received.data.buf = NULL;
             return -1;
           }
-          free(filename);  // TODO MEMCHECK
+          free(filename);  
         }
       }
       free(received.data.buf);
@@ -849,7 +948,7 @@ int execute(message_t received, int client_fd) {
             update_stats(0, 0, 0, 0, 1, -1, 0);
           }
           int tmp = sendRequest(client_fd, to_send);
-          free(to_send->data.buf);  // TODO: MEMCHECK
+          free(to_send->data.buf);  
           free(to_send);
           if (tmp < 0) {
             free(received.data.buf);
