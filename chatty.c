@@ -218,6 +218,13 @@ int main(int argc, char* argv[]) {
   destroy_user_manager(user_manager);
   free(threadPool);
   free(threadArg);
+
+  if (configuration.statFileName != NULL)
+    free(configuration.statFileName);
+  if (configuration.dirName != NULL)
+    free(configuration.dirName);
+  if (configuration.unixPath != NULL)
+    free(configuration.unixPath);
   return 0;
 }
 
@@ -400,16 +407,16 @@ int execute(message_hdr_t hdr, int client_fd) {
           tmp = sendHeader(client_fd, &(reply.hdr));
           if( tmp < 0 ) 
           {
-            free(buffer);
+        //    free(buffer);
             return -1;
           }
           tmp = sendData(client_fd, &(reply.data));
           if( tmp < 0 ) 
           {
-            free(buffer);
+        //    free(buffer);
             return -1;
           }
-          free(buffer);
+        //  free(buffer);
         }
       }
       else
@@ -440,16 +447,16 @@ int execute(message_hdr_t hdr, int client_fd) {
           tmp = sendHeader(client_fd, &(reply.hdr));
           if( tmp < 0 ) 
           {
-            free(buffer);
+        //    free(buffer);
             return -1;
           }
           tmp = sendData(client_fd, &(reply.data));
           if( tmp < 0 ) 
           {
-            free(buffer);
+        //    free(buffer);
             return -1;
           }
-          free(buffer);
+        //  free(buffer);
       }
       else
       {
@@ -484,16 +491,15 @@ int execute(message_hdr_t hdr, int client_fd) {
         message_t *msg = copyMsg(&received);
         msg->hdr.op = TXT_MESSAGE;
         sendRequest(rec_fd, msg);
-        free(msg);
+        //free(msg);
       }
       else if( rec_fd == -1 ) // registrato ma non connesso
       {
         // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
         update_stats(0,0,0,1,0,0,0); 
-        setHeader(&(reply.hdr), OP_OK, "");  
-        message_t *msg = copyMsg(&received);
-        post_msg(user_manager, receiver, msg);
-        free(msg);
+        setHeader(&(reply.hdr), OP_OK, "");
+        received.hdr.op = TXT_MESSAGE;  
+        post_msg(user_manager, receiver, &received);
       } 
       else // non registrato
       {
@@ -511,6 +517,7 @@ int execute(message_hdr_t hdr, int client_fd) {
     case POSTTXTALL_OP: {
       printf("\t\t\tINIZIO OP POSTTXTALL SENDER[%s]\n",sender);
       int *list;
+      received.hdr.op = TXT_MESSAGE;
       int pending = post_msg_all(user_manager, &received);
       printf("\t\t\tPENDING = %d\n",pending);
       int sent = fd_list(user_manager, &list);
@@ -524,7 +531,7 @@ int execute(message_hdr_t hdr, int client_fd) {
         sendRequest(list[i], msg);
         //free(msg);
       } 
-      // free(*list);
+      //free(list);
       // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
       update_stats(0,0,sent,pending,0,0,0); 
        
@@ -590,14 +597,13 @@ int execute(message_hdr_t hdr, int client_fd) {
           message_t *msg = copyMsg(&received);
           msg->hdr.op = FILE_MESSAGE;
           sendRequest(rec_fd, msg);
-          free(msg);
+          //free(msg);
         }
         else if( rec_fd == -1 ) // registrato ma non connesso
         {
-          setHeader(&(reply.hdr), OP_OK, "");  
-          message_t *msg = copyMsg(&received);
-          post_msg(user_manager, receiver, msg);
-          free(msg);
+          setHeader(&(reply.hdr), OP_OK, "");
+          received.hdr.op = FILE_MESSAGE; 
+          post_msg(user_manager, receiver, &received);
         } 
         else // non registrato
         {
@@ -663,7 +669,7 @@ int execute(message_hdr_t hdr, int client_fd) {
     // richiesta di recupero della history dei messaggi
     case GETPREVMSGS_OP: {
       printf("\t\t\tINIZIO OP GETPREVMSGS SENDER[%s]\n",sender);
-      message_t **list;
+      message_t *list;
       int len = retrieve_user_msg(user_manager, sender, &list);
       printf("\t\t\tGETPREVSMGS len=%d\n",len);
       if( len >= 0 )
@@ -671,12 +677,15 @@ int execute(message_hdr_t hdr, int client_fd) {
         setHeader(&(reply.hdr), OP_OK, "");
         setData(&(reply.data), "", (char*)&len, sizeof(size_t));
         sendRequest(client_fd, &reply);
-        for(int i=0; i<len; i++) sendRequest(client_fd, list[i]);
+        for(int i=0; i<len; i++){
+          printf("---------------------------------INVIO[%d][%s]\n",list[i].hdr.op,list[i].data.buf);
+          sendRequest(client_fd, &list[i]);
+        }
 //        for(int i=0; i<len; i++){
 //          free(list[i]->data.buf); 
 //          free(list[i]); 
 //        }
-//        free(*list);      
+        //free(list);      
       } 
       else
       {
@@ -697,16 +706,16 @@ int execute(message_hdr_t hdr, int client_fd) {
       tmp = sendHeader(client_fd, &(reply.hdr));
       if( tmp < 0 ) 
       {
-        free(buffer);
+        //free(buffer);
         return -1;
       }
       tmp = sendData(client_fd, &(reply.data));
       if( tmp < 0 ) 
       {
-        free(buffer);
+        //free(buffer);
         return -1;
       }
-      free(buffer);
+      //free(buffer);
       printf("\t\t\tFINE OP USRLIST SENDER[%s]\n",sender);
     } break;
 
@@ -770,12 +779,12 @@ int execute(message_hdr_t hdr, int client_fd) {
 void update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
 {
   pthread_mutex_lock(&mtx_stats);
-  chattyStats.nusers = reg; 
-	chattyStats.nonline = on;
-	chattyStats.ndelivered = msg_del;
-	chattyStats.nnotdelivered = msg_pen;
-	chattyStats.nfiledelivered = file_del;
-	chattyStats.nfilenotdelivered = file_pen;
-	chattyStats.nerrors = err;
+  chattyStats.nusers += reg; 
+	chattyStats.nonline += on;
+	chattyStats.ndelivered += msg_del;
+	chattyStats.nnotdelivered += msg_pen;
+	chattyStats.nfiledelivered += file_del;
+	chattyStats.nfilenotdelivered += file_pen;
+	chattyStats.nerrors += err;
   pthread_mutex_unlock(&mtx_stats);
 }

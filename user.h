@@ -65,7 +65,7 @@ int post_msg(user_manager_t *user_manager, char *name, message_t *msg);
 int post_msg_all(user_manager_t *user_manager, message_t *msg);
 
 // retrieve message list
-int retrieve_user_msg(user_manager_t *user_manager, char *name, message_t ***msg_list);
+int retrieve_user_msg(user_manager_t *user_manager, char *name, message_t **msg_list);
 
 // is user connected
 int connected_user(user_manager_t *user_manager, char *name);

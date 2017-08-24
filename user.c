@@ -204,9 +204,9 @@ int post_msg(user_manager_t *user_manager, char *name, message_t *msg)
   user_t *user = (user_t*) icl_hash_find(user_manager->hash, (void*) name );
   if( user != NULL )
   {
-    printf("\t\t\t\tpost_msg(%s) trovato\n", name);
+    printf("\t\t\t\tpost_msg(%s) trovato, msg = %s\n", name, msg->data.buf);
     ret = 0 ;
-    push_list(user->history, (void*) msg);     
+    push_list(user->history, (void*) copyMsg(msg));     
   } 
   else
     printf("\t\t\t\tpost_msg(%s) non trovato\n", name);
@@ -234,24 +234,27 @@ int post_msg_all(user_manager_t *user_manager, message_t *msg)
 }
 
 // retrieve message list
-int retrieve_user_msg(user_manager_t *user_manager, char *name, message_t ***msg_list)
+int retrieve_user_msg(user_manager_t *user_manager, char *name, message_t **msg_list)
 { 
   int size = -1; 
   pthread_mutex_lock(user_manager->mtx);
   user_t *user = (user_t*) icl_hash_find(user_manager->hash, (void*)name );
+	printf("\t\t\t\t\tOK %s\n",name);
   if( user != NULL )
   {
     size = (user->history)->cursize;
-    (**msg_list) = (message_t*) malloc( size * sizeof(message_t*) );
+		printf("\t\t\t\t\tSIZE = %d\n",size);
+    *msg_list = (message_t*) malloc( size * sizeof(message_t) );
     int tmp = 0;
-    //printf("\t\t\t\thistory(%s) msg[%d]\n", name, size);
+    printf("\t\t\t\thistory(%s) msg[%d]\n", name, size);
     while( tmp < size )
     {
-      (*msg_list)[tmp] = (message_t*)pop_list(user->history);
-      //printf("\t\t\t\t- [%d] from[%s] [%s]\n", tmp, (*msg_list)[tmp].hdr.sender, (*msg_list)[tmp].data.buf);
+      msg_list[tmp] = (message_t*)pop_list(user->history);
+      printf("\t\t\t\t- [%d] from[%s] [%s]\n", tmp, msg_list[tmp]->hdr.sender, msg_list[tmp]->data.buf);
       tmp++;    
     }
   } 
+	printf("\t\t\t\t\tOK2 %s\n",name);
   pthread_mutex_unlock(user_manager->mtx);
   return size;
 }
@@ -280,6 +283,7 @@ void free_user(void *user)
 {
   user_t *usr = (user_t*) user;
   destroy_list(usr->history);
+	free(usr->history);
   free(usr);
 }
 

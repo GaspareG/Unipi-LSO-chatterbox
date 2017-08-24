@@ -107,22 +107,14 @@ static inline void setData(message_data_t *data, char *rcv, const char *buf, uns
 
 static inline message_t* copyMsg(message_t *msg)
 {	
-  printf("\t\t\tCOPY 1\n");
   message_t *cpy = (message_t*) malloc(sizeof(message_t));
-  printf("\t\t\tCOPY 2\n");
   cpy->hdr.op = msg->hdr.op;
-  printf("\t\t\tCOPY 3\n");
   strncpy(cpy->hdr.sender, msg->hdr.sender, MAX_NAME_LENGTH+1);
-  printf("\t\t\tCOPY 4\n");
   cpy->data.hdr.len = msg->data.hdr.len;
-  printf("\t\t\tCOPY 5\n");
   strncpy(cpy->data.hdr.receiver, msg->data.hdr.receiver, MAX_NAME_LENGTH+1);
-  printf("\t\t\tCOPY 6\n");
   cpy->data.buf = (char*) malloc( cpy->data.hdr.len * sizeof(char) );
-  printf("\t\t\tCOPY 7\n");
   for(int i=0; i<cpy->data.hdr.len; i++)
     cpy->data.buf[i] = msg->data.buf[i];
-  printf("\t\t\tCOPY 8\n");
   return cpy;
 }
 
