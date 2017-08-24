@@ -24,9 +24,10 @@ list_t* create_list(unsigned long size)
   return ret;
 }
 
-void push_list(list_t *lst, void *data)
+list_node_t* push_list(list_t *lst, void *data)
 {
-  if( lst->size > 0 && lst->cursize == lst->size ) pop_list(lst);
+  list_node_t *ret = NULL;
+  if( lst->size > 0 && lst->cursize == lst->size ) ret = pop_list(lst);
 
   list_node_t *to_add = (list_node_t*) malloc(sizeof(list_node_t));
   memset(to_add, 0, sizeof(list_node_t));
@@ -42,6 +43,7 @@ void push_list(list_t *lst, void *data)
 
   lst->back = to_add;
   lst->cursize++;
+  return ret;
 }
 
 void* pop_list(list_t *lst)
@@ -59,11 +61,11 @@ void* pop_list(list_t *lst)
   return ret;
 }
 
-void destroy_list(list_t *lst)
+void destroy_list(list_t *lst, void (*free_data)(void*))
 {
-  char *tmp ;
+  void *tmp ;
   tmp = NULL;
-  while( (tmp = pop_list(lst)) != NULL ) free(tmp);
+  while( (tmp = pop_list(lst)) != NULL ) free_data(tmp);
 }
 
 #endif /* LIST_C_ */

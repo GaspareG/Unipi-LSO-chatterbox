@@ -7,7 +7,7 @@ fi
 
 rm -f valgrind_out
 /usr/bin/valgrind --track-origins=yes -v --leak-check=full ./chatty -f DATA/chatty.conf1 >& ./valgrind_out &
-# /usr/bin/valgrind --leak-check=full ./chatty -f DATA/chatty.conf1 >& ./valgrind_out &
+#/usr/bin/valgrind --leak-check=full ./chatty -f DATA/chatty.conf1 >& ./valgrind_out &
 pid=$!
 
 # aspetto un po' per far partire valgrind

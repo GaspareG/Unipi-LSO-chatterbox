@@ -40,8 +40,8 @@ void destroy_user_manager(user_manager_t *user_manager) {
   pthread_mutex_destroy(user_manager->mtx);
   free(user_manager->mtx);
   user_manager->mtx = NULL;
-  icl_hash_destroy(user_manager->hash, NULL, free_user);
   icl_hash_destroy(user_manager->fd, NULL, NULL);
+  icl_hash_destroy(user_manager->hash, NULL, free_user);
   free(user_manager);
   user_manager = NULL;
 }
@@ -198,7 +198,13 @@ int post_msg(user_manager_t *user_manager, char *name, message_t *msg) {
   if (user != NULL) {
     printf("\t\t\t\tpost_msg(%s) trovato, msg = %s\n", name, msg->data.buf);
     ret = 0;
-    push_list(user->history, (void *)copyMsg(msg));
+    message_t *ret = (message_t*) push_list(user->history, (void *)copyMsg(msg));
+    if( ret != NULL )
+    {
+       printf("\t\t\t\t############RET########\n");
+       free(ret->data.buf);
+       free(ret);
+    }
   } else
     printf("\t\t\t\tpost_msg(%s) non trovato\n", name);
   pthread_mutex_unlock(user_manager->mtx);
@@ -216,7 +222,13 @@ int post_msg_all(user_manager_t *user_manager, message_t *msg) {
   icl_hash_foreach(user_manager->hash, i, j, kp, dp) {
     if (dp->user_fd != -1) continue;
     ret++;
-    push_list(dp->history, (void *)copyMsg(msg));
+    message_t *ret = (message_t*) push_list(dp->history, (void *)copyMsg(msg));
+    if( ret != NULL )
+    {
+       printf("\t\t\t\t############RET########\n");
+       free(ret->data.buf);
+       free(ret);
+    }
   }
   pthread_mutex_unlock(user_manager->mtx);
   return ret;
@@ -251,11 +263,20 @@ int connected_user(user_manager_t *user_manager, char *name) {
   return ret;
 }
 
+
+void free_msg(void *msg){
+  message_t *tmp = (message_t*) msg;
+  free(tmp->data.buf);
+  tmp->data.buf = NULL;
+  free(tmp);
+  tmp = NULL;
+}
+
 void free_name_user(void *name) { free((char *)name); }
 
 void free_user(void *user) {
   user_t *usr = (user_t *)user;
-  destroy_list(usr->history);
+  destroy_list(usr->history, free_msg);
   free(usr->history);
   usr->history = NULL;
   free(usr);

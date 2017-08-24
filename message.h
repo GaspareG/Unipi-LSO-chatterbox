@@ -122,6 +122,9 @@ static inline message_t* copyMsg(message_t *msg)
   //else
   //{
     cpy->data.buf = (char*) malloc( cpy->data.hdr.len * sizeof(char) );
+#if defined(MAKE_VALGRIND_HAPPY)
+    memset(cpy->data.buf, 0, cpy->data.hdr.len * sizeof(char));
+#endif  
     for(int i=0; i<cpy->data.hdr.len; i++)
       cpy->data.buf[i] = msg->data.buf[i];
   //}

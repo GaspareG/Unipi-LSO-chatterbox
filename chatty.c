@@ -92,11 +92,11 @@ int main(int argc, char *argv[]) {
   // Stampo le configurazioni lette
   printf("Configurazioni lette:\n");
   if (configuration.statFileName != NULL)
-  printf("%s \t-> [%s]\n", "statFileName", configuration.statFileName);
+    printf("%s \t-> [%s]\n", "statFileName", configuration.statFileName);
   if (configuration.dirName != NULL)
-  printf("%s \t-> [%s]\n", "dirName", configuration.dirName);
+    printf("%s \t-> [%s]\n", "dirName", configuration.dirName);
   if (configuration.unixPath != NULL)
-  printf("%s \t-> [%s]\n", "unixPath", configuration.unixPath);
+    printf("%s \t-> [%s]\n", "unixPath", configuration.unixPath);
   printf("%s \t-> [%lu]\n", "maxHistMsgs", configuration.maxHistMsgs);
   printf("%s \t-> [%lu]\n", "maxFileSize", configuration.maxFileSize);
   printf("%s \t-> [%lu]\n", "maxMsgSize", configuration.maxMsgSize);
@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
     int sel_ret = select(fd_num + 1, &rdset, NULL, &erset, &tv);
     if (sel_ret < 0) {
       perror("ERRORE SELECT: ");
-      printf("ERRORE SELECT: %d\n",stopped);
+      printf("ERRORE SELECT: %d\n", stopped);
       fflush(stdout);
     } else {
       // printf("Select ret=%d\n", sel_ret);
@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
   // Pulizia finale
   fflush(stdout);
   printf("Chiudo fd...\n");
-  for (fd = 0; fd <= fd_num; fd++) shutdown(fd, SHUT_RDWR); // close(fd);
+  for (fd = 0; fd <= fd_num; fd++) shutdown(fd, SHUT_RDWR);  // close(fd);
 
   printf("Chiudo sock_fd...\n");
   close(sock_fd);
@@ -332,7 +332,6 @@ void *worker(void *arg) {
   memset(&msg, 0, sizeof(message_t));
 
   while (!stopped) {
-
     printf("\tTHREAD[%d] Aspetto richiesta dalla coda\n", index);
     int fd = pop_queue(Q);
     printf("\tTHREAD[%d] coda = %d\n", index, fd);
@@ -348,6 +347,7 @@ void *worker(void *arg) {
       int ret = execute(msg, fd);
       printf("\tTHREAD[%d] Fine execute (esito=%d)\n", index, ret);
       free(msg.data.buf);
+      msg.data.buf = NULL;
       if (ret == 0) {
         printf("\tTHREAD[%d] Esito positivo, rimetto in coda\n", index);
         pthread_mutex_lock(&mtx_set);
@@ -355,24 +355,23 @@ void *worker(void *arg) {
         pthread_mutex_unlock(&mtx_set);
       } else {
         printf("\tTHREAD[%d] Esito negativo, non rimetto in coda\n", index);
-        if( disconnect_fd_user(user_manager, fd) == 0 )
-        {
-          // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+        if (disconnect_fd_user(user_manager, fd) == 0) {
+          // update_stats(int reg, int on, int msg_del, int msg_pen, int
+          // file_del, int file_pen, int err)
           update_stats(0, -1, 0, 0, 0, 0, 0);
-        }
-        else
-          printf("$$$$$$$$$$ERRORE DISCONNECT %d\n",fd);
+        } else
+          printf("$$$$$$$$$$ERRORE DISCONNECT %d\n", fd);
       }
     } else {
       free(msg.data.buf);
+      msg.data.buf = NULL;
       printf("\tTHREAD[%d] Errore lettura\n", index);
-      if( disconnect_fd_user(user_manager, fd) == 0 )
-      {
-        // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+      if (disconnect_fd_user(user_manager, fd) == 0) {
+        // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
+        // int file_pen, int err)
         update_stats(0, -1, 0, 0, 0, 0, 0);
-      }
-      else
-        printf("$$$$$$$$$$ERRORE DISCONNECT %d\n",fd);
+      } else
+        printf("$$$$$$$$$$ERRORE DISCONNECT %d\n", fd);
     }
   }
 
@@ -383,7 +382,6 @@ void *worker(void *arg) {
 int execute(message_t received, int client_fd) {
   int tmp;
   message_t reply;
-
 
   op_t operation = received.hdr.op;
   char *sender = received.hdr.sender;
@@ -396,8 +394,10 @@ int execute(message_t received, int client_fd) {
 
   printf("\t\t\tSENDER[%s] OP[%d]\n", sender, operation);
 
+  free(received.data.buf);
   if (readData(client_fd, &(received.data)) < 0) {
-    // if(received.data.buf != NULL) free(received.data.buf);
+    free(received.data.buf);
+    received.data.buf = NULL;
     printf("\t\t\tErrore lettura dati");
     return -1;
   }
@@ -411,9 +411,14 @@ int execute(message_t received, int client_fd) {
         if (tmp == -1) {
           setHeader(&(reply.hdr), OP_NICK_ALREADY, "");
           tmp = sendHeader(client_fd, &(reply.hdr));
-          if (tmp < 0) return -1;
+          if (tmp < 0) {
+            free(received.data.buf);
+            received.data.buf = NULL;
+            return -1;
+          }
         } else {
-          // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+          // update_stats(int reg, int on, int msg_del, int msg_pen, int
+          // file_del, int file_pen, int err)
           update_stats(1, 1, 0, 0, 0, 0, 0);
           char *buffer;
           int len = user_list(user_manager, &buffer);
@@ -421,11 +426,15 @@ int execute(message_t received, int client_fd) {
           setData(&(reply.data), "", buffer, len * (MAX_NAME_LENGTH + 1));
           tmp = sendHeader(client_fd, &(reply.hdr));
           if (tmp < 0) {
+            free(received.data.buf);
+            received.data.buf = NULL;
             free(buffer);
             return -1;
           }
           tmp = sendData(client_fd, &(reply.data));
           if (tmp < 0) {
+            free(received.data.buf);
+            received.data.buf = NULL;
             free(buffer);
             return -1;
           }
@@ -437,7 +446,11 @@ int execute(message_t received, int client_fd) {
         update_stats(0, 0, 0, 0, 0, 0, 1);
         setHeader(&(reply.hdr), OP_NICK_ALREADY, "");
         tmp = sendHeader(client_fd, &(reply.hdr));
-        if (tmp < 0) return -1;
+        if (tmp < 0) {
+          free(received.data.buf);
+          received.data.buf = NULL;
+          return -1;
+        }
       }
     } break;
 
@@ -458,14 +471,20 @@ int execute(message_t received, int client_fd) {
         setData(&(reply.data), "", buffer, len * (MAX_NAME_LENGTH + 1));
         tmp = sendHeader(client_fd, &(reply.hdr));
         if (tmp < 0) {
+          free(received.data.buf);
+          received.data.buf = NULL;
           free(buffer);
           return -1;
         }
         tmp = sendData(client_fd, &(reply.data));
         if (tmp < 0) {
+          free(received.data.buf);
+          received.data.buf = NULL;
           free(buffer);
           return -1;
         }
+        free(received.data.buf);
+        received.data.buf = NULL;
         free(buffer);
       } else {
         // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
@@ -473,7 +492,11 @@ int execute(message_t received, int client_fd) {
         update_stats(0, 0, 0, 0, 0, 0, 1);
         setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
         tmp = sendHeader(client_fd, &(reply.hdr));
-        if (tmp < 0) return -1;
+        if (tmp < 0) {
+          free(received.data.buf);
+          received.data.buf = NULL;
+          return -1;
+        }
       }
       printf("\t\t\tFINE OP CONNECT SENDER[%s]\n", sender);
     } break;
@@ -490,7 +513,8 @@ int execute(message_t received, int client_fd) {
       printf("\t\t\tFD UTENTE[%s] = %d\n", receiver, rec_fd);
 
       if (len > configuration.maxMsgSize) {
-        // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+        // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
+        // int file_pen, int err)
         update_stats(0, 0, 0, 0, 0, 0, 1);
         setHeader(&(reply.hdr), OP_MSG_TOOLONG, "");
       } else if (rec_fd >= 0)  // registrato e connesso
@@ -502,7 +526,7 @@ int execute(message_t received, int client_fd) {
         message_t *msg = copyMsg(&received);
         msg->hdr.op = TXT_MESSAGE;
         sendRequest(rec_fd, msg);
-        free(msg->data.buf); // TODO: MEMCHECK
+        free(msg->data.buf);  // TODO: MEMCHECK
         free(msg);
       } else if (rec_fd == -1)  // registrato ma non connesso
       {
@@ -530,11 +554,18 @@ int execute(message_t received, int client_fd) {
       printf("\t\t\tINIZIO OP POSTTXTALL SENDER[%s]\n", sender);
       int len = received.data.hdr.len;
       if (len > configuration.maxMsgSize) {
-        // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+        // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
+        // int file_pen, int err)
         update_stats(0, 0, 0, 0, 0, 0, 1);
         setHeader(&(reply.hdr), OP_MSG_TOOLONG, "");
         tmp = sendHeader(client_fd, &(reply.hdr));
-        if( tmp < 0 ) return -1;
+        if (tmp < 0) {
+          free(received.data.buf);
+          received.data.buf = NULL;
+          return -1;
+        }
+        free(received.data.buf);
+        received.data.buf = NULL;
         return 0;
       }
       int *list;
@@ -551,37 +582,44 @@ int execute(message_t received, int client_fd) {
                msg->hdr.op, msg->hdr.sender, msg->data.hdr.receiver,
                msg->data.hdr.len, msg->data.buf);
         sendRequest(list[i], msg);
-        if( msg->data.buf != NULL ) free(msg->data.buf);
-        free(msg);      // TODO MEMCHECK
+        free(msg->data.buf);
+        free(msg);  // TODO MEMCHECK
         // free(&list[i]); // TODO MEMCHECK
       }
-      free(list); // TODO MEMCHECK
+      free(list);  // TODO MEMCHECK
       // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
       // int file_pen, int err)
       update_stats(0, 0, sent, pending, 0, 0, 0);
 
-      setHeader(&(reply.hdr), OP_OK, ""); 
+      setHeader(&(reply.hdr), OP_OK, "");
       tmp = sendHeader(client_fd, &(reply.hdr));
-      if (tmp < 0) return -1;
+      if (tmp < 0) {
+        free(received.data.buf);
+        received.data.buf = NULL;
+        return -1;
+      }
       printf("\t\t\tFINE OP POSTTXTALL SENDER[%s]\n", sender);
     } break;
 
     // richiesta di invio di un file ad un nickname o groupname
     case POSTFILE_OP: {
       printf("\t\t\tINIZIO OP POSTFILE SENDER[%s]\n", sender);
-      
+
       printf("\t\t\tRECEIVED NAME[%s] SIZE[%d]\n", received.data.buf,
              received.data.hdr.len);
       message_data_t file_data;
       readData(client_fd, &file_data);
       printf("\t\t\tRECEIVED FILESIZE[%d]\n", file_data.hdr.len);
       if (file_data.hdr.len > configuration.maxFileSize * 1024) {
-        // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+        // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
+        // int file_pen, int err)
         update_stats(0, 0, 0, 0, 0, 0, 1);
         setHeader(&(reply.hdr), OP_MSG_TOOLONG, "");
         tmp = sendHeader(client_fd, &(reply.hdr));
-        if (tmp < 0){
-          free(file_data.buf); // TODO: MEMCHECK
+        if (tmp < 0) {
+          free(file_data.buf);  // TODO: MEMCHECK
+          free(received.data.buf);
+          received.data.buf = NULL;
           return -1;
         }
       } else {
@@ -590,18 +628,17 @@ int execute(message_t received, int client_fd) {
         char *filename = malloc(pathlen * sizeof(char *));
         memset(filename, 0, pathlen);
         strcat(filename, configuration.dirName);
-        strcat(filename, "/"); 
+        strcat(filename, "/");
         char *lastSlash = strrchr(received.data.buf, '/');
 
-        printf("SLASSSSSHHHH P[%s] L[%d]\n", received.data.buf, received.data.hdr.len);
-        if( lastSlash != NULL )
-        {
+        printf("SLASSSSSHHHH P[%s] L[%d]\n", received.data.buf,
+               received.data.hdr.len);
+        if (lastSlash != NULL) {
           lastSlash++;
-          received.data.hdr.len -= (lastSlash-received.data.buf);
-          received.data.buf = lastSlash;
-          printf("SLASSSSSHHHH [%s] L[%d]\n", received.data.buf, received.data.hdr.len);
-        }
-        strncat(filename, received.data.buf, received.data.hdr.len);
+          int nlen = received.data.hdr.len - (lastSlash - received.data.buf);
+          strncat(filename, lastSlash, nlen);
+        } else
+          strncat(filename, received.data.buf, received.data.hdr.len);
 
         FILE *fd;
         fd = fopen(filename, "wb");
@@ -609,8 +646,10 @@ int execute(message_t received, int client_fd) {
           perror("open");
           fprintf(stderr, "ERRORE: aprendo il file %s\n", filename);
           fclose(fd);
-          free(file_data.buf); // TODO: MEMCHECK
-          free(filename); // TODO: MEMCHECK
+          free(received.data.buf);
+          received.data.buf = NULL;
+          free(file_data.buf);  // TODO: MEMCHECK
+          free(filename);       // TODO: MEMCHECK
           return -1;
         }
 
@@ -622,8 +661,10 @@ int execute(message_t received, int client_fd) {
           perror("open");
           fprintf(stderr, "ERRORE: scrivendo il file %s\n", filename);
           fclose(fd);
-          free(file_data.buf); // TODO: MEMCHECK
-          free(filename); // TODO: MEMCHECK
+          free(received.data.buf);
+          received.data.buf = NULL;
+          free(file_data.buf);  // TODO: MEMCHECK
+          free(filename);       // TODO: MEMCHECK
           return -1;
         }
 
@@ -638,31 +679,38 @@ int execute(message_t received, int client_fd) {
           message_t *msg = copyMsg(&received);
           msg->hdr.op = FILE_MESSAGE;
           tmp = sendRequest(rec_fd, msg);
-          free(msg->data.buf); // TODO: MEMCHECK
+          free(msg->data.buf);  // TODO: MEMCHECK
           free(msg);
-          // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+          // update_stats(int reg, int on, int msg_del, int msg_pen, int
+          // file_del, int file_pen, int err)
           update_stats(0, 0, 0, 0, 1, 0, 0);
-          
+
         } else if (rec_fd == -1)  // registrato ma non connesso
         {
           setHeader(&(reply.hdr), OP_OK, "");
           received.hdr.op = FILE_MESSAGE;
           post_msg(user_manager, receiver, &received);
 
-          // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+          // update_stats(int reg, int on, int msg_del, int msg_pen, int
+          // file_del, int file_pen, int err)
           update_stats(0, 0, 0, 0, 0, 1, 0);
 
         } else  // non registrato
         {
-          // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+          // update_stats(int reg, int on, int msg_del, int msg_pen, int
+          // file_del, int file_pen, int err)
           update_stats(0, 0, 0, 0, 0, 0, 1);
           setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
         }
 
         tmp = sendHeader(client_fd, &(reply.hdr));
-        free(file_data.buf); // TODO: MEMCHECK
-          free(filename); // TODO: MEMCHECK
-        if (tmp < 0) return -1;
+        free(file_data.buf);  // TODO: MEMCHECK
+        free(filename);       // TODO: MEMCHECK
+        if (tmp < 0) {
+          free(received.data.buf);
+          received.data.buf = NULL;
+          return -1;
+        }
       }
       printf("\t\tFINE OP POSTFILE SENDER[%s]\n", sender);
     } break;
@@ -684,8 +732,10 @@ int execute(message_t received, int client_fd) {
       if (fd < 0) {
         setHeader(&(reply.hdr), OP_NO_SUCH_FILE, "");
         tmp = sendHeader(client_fd, &(reply.hdr));
-        if (tmp < 0){
-          free(filename); // TODO MEMCHECK
+        if (tmp < 0) {
+          free(filename);  // TODO MEMCHECK
+          free(received.data.buf);
+          received.data.buf = NULL;
           return -1;
         }
       } else {
@@ -693,8 +743,10 @@ int execute(message_t received, int client_fd) {
         if (stat(filename, &st) == -1 || !S_ISREG(st.st_mode)) {
           setHeader(&(reply.hdr), OP_NO_SUCH_FILE, "");
           tmp = sendHeader(client_fd, &(reply.hdr));
-          if (tmp < 0){
-            free(filename); // TODO MEMCHECK
+          if (tmp < 0) {
+            free(filename);  // TODO MEMCHECK
+            free(received.data.buf);
+            received.data.buf = NULL;
             return -1;
           }
         }
@@ -703,35 +755,40 @@ int execute(message_t received, int client_fd) {
 
         mappedfile = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
         if (mappedfile == MAP_FAILED) {
-
-          // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+          // update_stats(int reg, int on, int msg_del, int msg_pen, int
+          // file_del, int file_pen, int err)
           update_stats(0, 0, 0, 0, 0, 0, 1);
 
           setHeader(&(reply.hdr), OP_NO_SUCH_FILE, "");
           tmp = sendHeader(client_fd, &(reply.hdr));
-          if (tmp < 0){
-            free(filename); // TODO MEMCHECK
+          if (tmp < 0) {
+            free(filename);  // TODO MEMCHECK
             return -1;
           }
         } else {
           close(fd);
 
-          // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+          // update_stats(int reg, int on, int msg_del, int msg_pen, int
+          // file_del, int file_pen, int err)
           update_stats(0, 0, 0, 0, 1, -1, 0);
 
           setHeader(&(reply.hdr), OP_OK, "");
           tmp = sendHeader(client_fd, &(reply.hdr));
-          if (tmp < 0){
-            free(filename); // TODO MEMCHECK
+          if (tmp < 0) {
+            free(filename);  // TODO MEMCHECK
+            free(received.data.buf);
+            received.data.buf = NULL;
             return -1;
           }
           setData(&(reply.data), "", mappedfile, filesize);
           tmp = sendData(client_fd, &(reply.data));
-          if (tmp < 0){
-            free(filename); // TODO MEMCHECK
+          if (tmp < 0) {
+            free(filename);  // TODO MEMCHECK
+            free(received.data.buf);
+            received.data.buf = NULL;
             return -1;
           }
-          free(filename); // TODO MEMCHECK
+          free(filename);  // TODO MEMCHECK
         }
       }
       printf("\t\t\tFINE OP GETFILE SENDER[%s]\n", sender);
@@ -740,33 +797,32 @@ int execute(message_t received, int client_fd) {
     // richiesta di recupero della history dei messaggi
     case GETPREVMSGS_OP: {
       printf("\t\t\tINIZIO OP GETPREVMSGS SENDER[%s]\n", sender);
-      list_t* prev = retrieve_user_msg(user_manager, sender);
+      list_t *prev = retrieve_user_msg(user_manager, sender);
       printf("\t\t\tGETPREVSMGS len=%ld\n", prev->cursize);
       if (prev != NULL) {
         setHeader(&(reply.hdr), OP_OK, "");
         setData(&(reply.data), "", (char *)&(prev->cursize), sizeof(size_t));
         sendRequest(client_fd, &reply);
-        message_t *to_send ;
-        while( (to_send = (message_t*)pop_list(prev)) != NULL )
-        {
+        message_t *to_send;
+        while ((to_send = (message_t *)pop_list(prev)) != NULL) {
           printf("---------------------------------INVIO[%d][%s]\n",
                  to_send->hdr.op, to_send->data.buf);
-          if( to_send->hdr.op == TXT_MESSAGE )
-          {
-            // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+          if (to_send->hdr.op == TXT_MESSAGE) {
+            // update_stats(int reg, int on, int msg_del, int msg_pen, int
+            // file_del, int file_pen, int err)
             update_stats(0, 0, 1, -1, 0, 0, 0);
-          }
-          else
-          {
-            // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+          } else {
+            // update_stats(int reg, int on, int msg_del, int msg_pen, int
+            // file_del, int file_pen, int err)
             update_stats(0, 0, 0, 0, 1, -1, 0);
-          } 
+          }
           int tmp = sendRequest(client_fd, to_send);
-          free(to_send->data.buf); // TODO: MEMCHECK
+          free(to_send->data.buf);  // TODO: MEMCHECK
           free(to_send);
-          if( tmp < 0 )
-          {
-            return -1;            
+          if (tmp < 0) {
+            free(received.data.buf);
+            received.data.buf = NULL;
+            return -1;
           }
         }
 
@@ -787,12 +843,14 @@ int execute(message_t received, int client_fd) {
       setData(&(reply.data), "", buffer, len * (MAX_NAME_LENGTH + 1));
       tmp = sendHeader(client_fd, &(reply.hdr));
       if (tmp < 0) {
-        // free(buffer);
+        free(received.data.buf);
+        received.data.buf = NULL;
         return -1;
       }
       tmp = sendData(client_fd, &(reply.data));
       if (tmp < 0) {
-        // free(buffer);
+        free(received.data.buf);
+        received.data.buf = NULL;
         return -1;
       }
       // free(buffer);
@@ -803,22 +861,19 @@ int execute(message_t received, int client_fd) {
     // richiesta di deregistrazione di un nickname o groupname
     case UNREGISTER_OP: {
       printf("\t\t\tINIZIO OP UNREGISTER SENDER[%s]\n", sender);
-      if (disconnect_user(user_manager, sender) == 0)
-      {
-        // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+      if (disconnect_user(user_manager, sender) == 0) {
+        // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
+        // int file_pen, int err)
         update_stats(0, -1, 0, 0, 0, 0, 0);
-        if (unregister_user(user_manager, sender) == 0)
-        {
-          // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+        if (unregister_user(user_manager, sender) == 0) {
+          // update_stats(int reg, int on, int msg_del, int msg_pen, int
+          // file_del, int file_pen, int err)
           update_stats(-1, 0, 0, 0, 0, 0, 0);
           setHeader(&(reply.hdr), OP_OK, "");
-        }
-        else
+        } else
           setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
-      }
-      else
+      } else
         setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
-
 
       sendHeader(client_fd, &(reply.hdr));
       printf("\t\t\tFINE OP UNREGISTER SENDER[%s]\n", sender);
@@ -828,13 +883,12 @@ int execute(message_t received, int client_fd) {
     // richiesta di disconnessione
     case DISCONNECT_OP: {
       printf("\t\t\tINIZIO OP DISCONNECT SENDER[%s]\n", sender);
-      if (disconnect_user(user_manager, sender) == 0)
-      {
-        // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del, int file_pen, int err)
+      if (disconnect_user(user_manager, sender) == 0) {
+        // update_stats(int reg, int on, int msg_del, int msg_pen, int file_del,
+        // int file_pen, int err)
         update_stats(0, -1, 0, 0, 0, 0, 0);
         setHeader(&(reply.hdr), OP_OK, "");
-      }
-      else
+      } else
         setHeader(&(reply.hdr), OP_NICK_UNKNOWN, "");
       sendHeader(client_fd, &(reply.hdr));
       printf("\t\t\tFINE OP DISCONNECT SENDER[%s]\n", sender);

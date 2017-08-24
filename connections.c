@@ -64,13 +64,7 @@ int readHeader(long connfd, message_hdr_t *hdr)
 {
     memset(hdr, 0, sizeof(message_hdr_t));
     int tmp = read(connfd, hdr, sizeof(message_hdr_t));
-    //printf("\t\t\t\t\t[%ld] readHeader(op=%d) tmp=%d\n",connfd, hdr->op, tmp);
-    //printf("\t\t\t\t\t[%ld] readHeader(sender=%s) tmp=%d\n",connfd, hdr->sender, tmp);
     if( tmp < 0 ) return -1;
-    //int tmp = read(connfd, &(hdr->op), sizeof(op_t));
-    //if( tmp < 0 ) return -1;
-    //tmp = readBuffer(connfd, hdr->sender, MAX_NAME_LENGTH+1); 
-    //if( tmp < 0 ) return -1;
     return 1;
 }
 
@@ -78,17 +72,18 @@ int readData(long connfd, message_data_t *data)
 {
     memset(data, 0, sizeof(message_data_t));
     int tmp = read(connfd, &(data->hdr), sizeof(message_data_hdr_t));
-    //printf("\t\t\t\t\t[%ld] readHeader(len=%d) tmp=%d\n",connfd, data->hdr.len, tmp);
-    //printf("\t\t\t\t\t[%ld] readHeader(receiver=%s) tmp=%d\n",connfd, data->hdr.receiver, tmp);
     if( tmp < 0 ) return -1;
-    //int tmp = read(connfd, &(data->hdr.len), sizeof(unsigned int));
-    //if( tmp < 0 ) return -1;
-    //tmp = readBuffer(connfd, data->hdr.receiver, MAX_NAME_LENGTH+1);
-    //if( tmp < 0 ) return -1;
-    data->buf = (char*) malloc( data->hdr.len * sizeof(char) );
-    memset(data->buf, 0, data->hdr.len * sizeof(char));
-    tmp = readBuffer(connfd, data->buf, data->hdr.len);
-    if( tmp < 0 ) return -1;
+    if( data->hdr.len == 0 )
+    {
+      data->buf =  NULL;
+    }
+    else
+    {
+      data->buf = (char*) malloc( data->hdr.len * sizeof(char) );
+      memset(data->buf, 0, data->hdr.len * sizeof(char));
+      tmp = readBuffer(connfd, data->buf, data->hdr.len);
+      if( tmp < 0 ) return -1;
+    }
     return 1;
 }
 
@@ -107,9 +102,7 @@ int sendBuffer(long connfd, char *buffer, unsigned int length)
 {
     while( length > 0 )
     {
-    	//printf("\t\t\t\t\tsendBuffer(length=%u)\n",length);
         int wrote = write(connfd, buffer, length);
-    	//printf("\t\t\t\t\tsendBuffer(wrote=%u)\n",wrote);
 	if( wrote < 0 ) return -1;
         buffer += wrote;
         length -= wrote;
@@ -129,12 +122,7 @@ int sendRequest(long connfd, message_t *msg)
 int sendData(long connfd, message_data_t *data)
 {
     int tmp = write(connfd, &(data->hdr), sizeof(message_data_hdr_t));
-    //printf("\t\t\t\t\tsendDataHeader tmp=%d\n", tmp);
     if( tmp < 0 ) return -1;
-    //int tmp = write(connfd, &(data->hdr.len), sizeof(unsigned int));
-    //if( tmp < 0 ) return -1;
-    //tmp = sendBuffer(connfd, data->hdr.receiver, MAX_NAME_LENGTH+1);
-    //if( tmp < 0 ) return -1;
     tmp = sendBuffer(connfd, data->buf, data->hdr.len);
     if( tmp < 0 ) return -1;
     return 1;
@@ -144,14 +132,7 @@ int sendHeader(long connfd, message_hdr_t *msg)
 {
     int tmp = write(connfd, msg, sizeof(message_hdr_t));
     if( tmp < 0 ) return -1;
-    //int tmp = write(connfd, &(msg->op), sizeof(op_t));
-    //if( tmp < 0 ) return -1;
-    //printf("\t\t\t\t\tsendHeader(op=%d) tmp=%d\n",msg->op, tmp);
-    //tmp = sendBuffer(connfd, msg->sender, MAX_NAME_LENGTH+1);  
-    //printf("\t\t\t\t\tsendHeader(sender=%s) tmp=%d\n",msg->sender, tmp);
-    //if( tmp < 0 ) return -1;
     return 1;
 }
-
 
 #endif /* CONNECTIONS_C_ */

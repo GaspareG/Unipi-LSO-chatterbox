@@ -70,6 +70,8 @@ list_t* retrieve_user_msg(user_manager_t *user_manager, char *name);
 // is user connected
 int connected_user(user_manager_t *user_manager, char *name);
 
+void free_msg(void *msg);
+
 // libera in memoria la struttura
 void free_user(void *user);
 

@@ -29,10 +29,10 @@ typedef struct {
 
 list_t* create_list(unsigned long size);
 
-void push_list(list_t *lst, void *data);
+list_node_t* push_list(list_t *lst, void *data);
 
 void* pop_list(list_t *lst);
 
-void destroy_list(list_t *lst);
+void destroy_list(list_t *lst, void (*free_data)(void*));
 
 #endif /* LIST_H_ */
