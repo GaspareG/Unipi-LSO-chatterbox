@@ -226,21 +226,21 @@ int main(int argc, char *argv[]) {
   free(threadArg);
 
   printf("Free configuration string...\n");
-  printf("STAT: [%s]\n", configuration.statFileName);
   printf("DIR:  [%s]\n", configuration.dirName);
   printf("PATH: [%s]\n", configuration.unixPath);
+  printf("STAT: [%s]\n", configuration.statFileName);
 
-  free(configuration.statFileName);
   free(configuration.dirName);
   free(configuration.unixPath);
+  free(configuration.statFileName);
 
-  configuration.statFileName = NULL;
   configuration.dirName = NULL;
   configuration.unixPath = NULL;
+  configuration.statFileName = NULL;
 
-  printf("STAT: [%s]\n", configuration.statFileName);
   printf("DIR:  [%s]\n", configuration.dirName);
   printf("PATH: [%s]\n", configuration.unixPath);
+  printf("STAT: [%s]\n", configuration.statFileName);
 
   printf("Return\n");
   return 0;

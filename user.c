@@ -39,9 +39,11 @@ void destroy_user_manager(user_manager_t *user_manager) {
   pthread_mutex_lock(user_manager->mtx);
   pthread_mutex_destroy(user_manager->mtx);
   free(user_manager->mtx);
+  user_manager->mtx = NULL;
   icl_hash_destroy(user_manager->hash, NULL, free_user);
-  icl_hash_destroy(user_manager->fd, NULL, free_name_user);
+  icl_hash_destroy(user_manager->fd, NULL, NULL);
   free(user_manager);
+  user_manager = NULL;
 }
 
 // Registra un utente
@@ -96,8 +98,8 @@ int unregister_user(user_manager_t *user_manager, char *name) {
   if (user != NULL) {
     ret = 0;
     icl_hash_delete(user_manager->hash, name, NULL, free_user); // TODO: MEMCHECK
-    destroy_list(user->history);
-    free(user->history);
+    //destroy_list(user->history);
+    //free(user->history);
     // TODO
   }
   pthread_mutex_unlock(user_manager->mtx);
@@ -255,7 +257,9 @@ void free_user(void *user) {
   user_t *usr = (user_t *)user;
   destroy_list(usr->history);
   free(usr->history);
+  usr->history = NULL;
   free(usr);
+  user = NULL;
 }
 
 #endif /* USER_C_ */
