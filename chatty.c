@@ -196,9 +196,7 @@ int main(int argc, char *argv[]) {
 
     int sel_ret = select(fd_num + 1, &rdset, NULL, &erset, &tv);
     if (sel_ret < 0) {
-      perror("ERRORE SELECT: ");
-      printf("ERRORE SELECT: %d\n", stopped);
-      fflush(stdout);
+
     } else {
       // printf("Select ret=%d\n", sel_ret);
       for (fd = 0; fd <= fd_num; fd++) {
