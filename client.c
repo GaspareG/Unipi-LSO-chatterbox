@@ -9,8 +9,11 @@
  * @file client.c
  * @brief Semplice client di test. 
  *
- *
+ * @author Gaspare Ferraro 520549 
+ * Si dichiara che il contenuto di questo file e' in ogni sua parte opera  
+ * originale dell'autore  
  */
+
 #define _POSIX_C_SOURCE 200809L
 #include <time.h>
 #include <errno.h>

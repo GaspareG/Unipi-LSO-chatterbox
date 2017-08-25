@@ -4,8 +4,10 @@
 # Dipartimento di Informatica Università di Pisa
 # Docenti: Prencipe, Torquati
 #
-# Autore: Gaspare Ferraro CORSO B - Matricola 520549
-# Tale sorgente è, in ogni sua parte, opera originale di Gaspare Ferraro
+# @author Gaspare Ferraro 520549 
+# Si dichiara che il contenuto di questo file e' in ogni sua parte opera  
+# originale dell'autore  
+#
 #
 # @file script.sh
 # @brief script con le funzionalità richieste
@@ -49,12 +51,11 @@ DirName="$(cat $1)"
 DirName=${DirName##*"DirName"}
 DirName=${DirName#*"="}
 DirName=${DirName#*'\s'}
-
 #Tolgo il suffisso
 DirName=${DirName%%'#'*}
 DirName=${DirName//[[:space:]]/}
-
 #Tolto l'estensione
+
 Time=$2
 
 # Se t == 0 
@@ -83,7 +84,7 @@ elif [ $Time -gt 0 ];
 then
 
     #echo "Time > 0" 1>&2   
-    echo "Files dentro a $DirName:" 1>&2
+    echo "Files più vecchi di $Time minuti dentro a [$DirName]:" 1>&2
 
     # Lista di file nella cartella
     Files=$DirName/*

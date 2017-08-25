@@ -4,13 +4,15 @@
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
  *
- * Autore: Gaspare Ferraro CORSO B - Matricola 520549
- * Tale sorgente è, in ogni sua parte, opera originale di Gaspare Ferraro
  */
 /**
  * @file list.c
  * @brief Implementazione delle funzioni per le operazioni
  *        di una coda mediante lista linkata
+ *
+ * @author Gaspare Ferraro 520549 
+ * Si dichiara che il contenuto di questo file e' in ogni sua parte opera  
+ * originale dell'autore  
  */
 
 #ifndef LIST_C_

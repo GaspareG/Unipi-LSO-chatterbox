@@ -4,12 +4,14 @@
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
  *
- * Autore: Gaspare Ferraro CORSO B - Matricola 520549
- * Tale sorgente è, in ogni sua parte, opera originale di Gaspare Ferraro
  */
 /**
  * @file listener.c
  * @brief File fittizio per lo scambio tra client
+ *
+ * @author Gaspare Ferraro 520549 
+ * Si dichiara che il contenuto di questo file e' in ogni sua parte opera  
+ * originale dell'autore  
  */
 
 

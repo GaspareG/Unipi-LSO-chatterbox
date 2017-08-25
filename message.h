@@ -4,13 +4,15 @@
  * Dipartimento di Informatica Università di Pisa
  * Docenti: Prencipe, Torquati
  *
- * Autore: Gaspare Ferraro CORSO B - Matricola 520549
- * Tale sorgente è, in ogni sua parte, opera originale di Gaspare Ferraro
  */
 /**
  * @file message.h
  * @brief Definizione delle strutture e funzioni basilari per
  *        la rappresentazione e gestione dei messaggi scambiati
+ *
+ * @author Gaspare Ferraro 520549 
+ * Si dichiara che il contenuto di questo file e' in ogni sua parte opera  
+ * originale dell'autore  
  */
 
 #ifndef MESSAGE_H_
